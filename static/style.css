@@ -1,0 +1,90 @@
+body {
+    margin: 0;
+    background: #f5f7fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    Arial, sans-serif;
+}
+
+#app {
+    max-width: 420px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    padding: 20px 24px 28px;
+}
+
+.top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.top-bar h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.store-btn {
+    text-decoration: none;
+    background: #409eff;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.store-btn:hover {
+    background: #337ecc;
+}
+
+.upload-wrapper {
+    text-align: center;
+}
+
+.drop-area {
+    border: 2px dashed #c0c4cc;
+    border-radius: 10px;
+    padding: 30px 20px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.drop-area:hover {
+    border-color: #409eff;
+    background: #f0f7ff;
+}
+
+.drop-area img {
+    max-width: 100%;
+    max-height: 240px;
+    border-radius: 8px;
+}
+
+.upload-btn {
+    margin-top: 14px;
+    padding: 8px 24px;
+    font-size: 14px;
+    background: #67c23a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.upload-btn:disabled {
+    background: #c2e7b0;
+    cursor: not-allowed;
+}
+
+.success {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.success a {
+    color: #409eff;
+    word-break: break-all;
+}

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>图片上传</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <style>
+        :root {
+            --primary: #1f8ef1;
+            --bg: #f4f7f9;
+        }
+        body {
+            margin: 0;
+            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: #fff;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary);
+        }
+
+        #app {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .welcome-section h2 { margin: 0; color: #333; }
+        .welcome-section p { color: #888; margin-top: 8px; }
+
+        .drop-area {
+            border: 2px dashed #ccd5db;
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            color: #7a8b9a;
+            background: #fafbfc;
+            transition: all 0.3s;
+        }
+        .drop-area:hover {
+            border-color: var(--primary);
+            background: #f0f7ff;
+            color: var(--primary);
+        }
+
+        .file-list {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            gap: 12px;
+        }
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: #eee;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            overflow: hidden;
+        }
+        .file-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .file-info { flex: 1; }
+        .file-name { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+        
+        /* 进度条 */
+        .progress-container {
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.2s;
+        }
+
+        .actions {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn-upload {
+            padding: 12px 40px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: var(--primary);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(31,142,241,0.3);
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .btn-upload:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-upload:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="nav-brand">
+        <img src="/static/favicon.ico" width="32" height="32" onerror="this.style.display='none'">
+        局域网文件仓库
+    </div>
+    <div class="nav-links">
+        <a href="/" class="active">上传</a>
+        <a href="/store">仓库</a>
+    </div>
+</div>
+
+<div id="app">
+    <div class="welcome-section">
+        <h2>欢迎使用文件仓库</h2>
+        <p>支持任意类型文件上传，最大化局域网协作效率</p>
+    </div>
+
+    <div class="drop-area"
+         @dragover.prevent
+         @drop.prevent="onDrop"
+         @click="$refs.file.click()">
+        <div style="font-size: 40px; margin-bottom: 10px;">☁️</div>
+        <div>拖拽文件到这里，或点击选择</div>
+        <div style="font-size: 12px; margin-top: 8px; opacity: 0.7;">支持多选上传</div>
+    </div>
+
+    <input type="file"
+           ref="file"
+           multiple
+           hidden
+           @change="onSelect">
+
+    <div class="file-list" v-if="files.length > 0">
+        <div class="file-item" v-for="(f, index) in files" :key="index">
+            <div class="file-icon">
+                <img v-if="f.isImage" :src="f.preview">
+                <span v-else>📄</span>
+            </div>
+            <div class="file-info">
+                <div class="file-name">{{ f.name }}</div>
+                <div class="progress-container">
+                    <div class="progress-bar" :style="{ width: f.progress + '%' }"></div>
+                </div>
+            </div>
+            <div style="font-size: 12px; color: #999; width: 40px; text-align: right;">
+                {{ f.progress }}%
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn-upload" @click="uploadAll" :disabled="files.length===0 || uploading">
+            {{ uploading ? '正在上传...' : '立即上传' }}
+        </button>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                files: [],
+                uploading: false
+            }
+        },
+        methods: {
+            onSelect(e) {
+                this.addFiles(e.target.files)
+            },
+            onDrop(e) {
+                this.addFiles(e.dataTransfer.files)
+            },
+            addFiles(fileList) {
+                for (const f of fileList) {
+                    const isImage = f.type.startsWith('image/')
+                    this.files.push({
+                        raw: f,
+                        name: f.name,
+                        isImage: isImage,
+                        preview: isImage ? URL.createObjectURL(f) : null,
+                        progress: 0,
+                        status: 'pending'
+                    })
+                }
+            },
+            async uploadAll() {
+                this.uploading = true
+                for (let i = 0; i < this.files.length; i++) {
+                    if (this.files[i].status === 'success') continue
+                    await this.uploadSingle(i)
+                }
+                this.uploading = false
+                const allSuccess = this.files.every(f => f.status === 'success')
+                if (allSuccess) {
+                    alert('全部文件上传完成！')
+                    this.files = []
+                }
+            },
+            uploadSingle(index) {
+                return new Promise((resolve) => {
+                    const fileObj = this.files[index]
+                    const fd = new FormData()
+                    fd.append('file', fileObj.raw)
+
+                    const xhr = new XMLHttpRequest()
+                    xhr.open('POST', '/upload', true)
+
+                    xhr.upload.onprogress = (e) => {
+                        if (e.lengthComputable) {
+                            fileObj.progress = Math.round((e.loaded / e.total) * 100)
+                        }
+                    }
+
+                    xhr.onload = () => {
+                        if (xhr.status === 200) {
+                            fileObj.status = 'success'
+                            fileObj.progress = 100
+                        } else {
+                            fileObj.status = 'error'
+                            alert(fileObj.name + ' 上传失败')
+                        }
+                        resolve()
+                    }
+
+                    xhr.onerror = () => {
+                        fileObj.status = 'error'
+                        resolve()
+                    }
+
+                    xhr.send(fd)
+                })
+            }
+        }
+    })
+</script>
+
+</body>
+</html>

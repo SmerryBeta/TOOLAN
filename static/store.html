@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>图片仓库 & 留言</title>
+    <style>
+        /* ===== 全局 ===== */
+        :root {
+            --primary: #1f8ef1;
+            --danger: #ff4d4f;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            background: #f6f7f9;
+            color: #333;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: #fff;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 16px;
+        }
+
+        .tab-bar {
+            display: flex;
+            background: #fff;
+            border-bottom: 1px solid #e6e6e6;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+        }
+
+        .tab-item {
+            padding: 14px 24px;
+            cursor: pointer;
+            color: #666;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .tab-item.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            font-weight: 600;
+            background: #f0f7ff;
+        }
+
+        .content {
+            padding: 20px;
+            background: #fff;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            min-height: 400px;
+        }
+
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .btn-group { display: flex; gap: 10px; }
+        button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        button:hover { background: #f5f5f5; }
+        button.primary { background: var(--primary); color: #fff; border: none; }
+        button.danger { background: var(--danger); color: #fff; border: none; }
+
+        /* 图片网格 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        .item { 
+            position: relative; 
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #eee;
+            transition: transform 0.2s;
+        }
+        .item:hover { transform: translateY(-4px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+        img.thumb {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        .item-info {
+            padding: 8px;
+            font-size: 12px;
+            background: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 文件列表表格 */
+        .file-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .file-table th {
+            text-align: left;
+            background: #fafafa;
+            padding: 12px;
+            border-bottom: 2px solid #eee;
+            color: #666;
+            font-size: 14px;
+        }
+        .file-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        .file-table tr:hover { background: #fafafa; }
+
+        .select-box {
+            display: flex;
+            align-items: center;
+        }
+        .select-box input { width: 18px; height: 18px; cursor: pointer; }
+
+        /* preview overlay */
+        .preview {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .preview img { max-width: 90%; max-height: 90%; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+
+        /* messages */
+        #record-view { display: flex; flex-direction: column; height: 70vh; }
+        .message-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message-item {
+            display: flex;
+            gap: 15px;
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .message-meta { width: 150px; color: #888; font-size: 12px; }
+        .message-body { flex: 1; }
+        .message-title { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; }
+        .message-content { line-height: 1.5; color: #555; }
+        .msg-delete { color: var(--danger); border: none; background: none; cursor: pointer; padding: 0; }
+
+        .message-input {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            background: #fff;
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+        .message-input input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            flex: 1;
+        }
+        .message-input button {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="nav-brand">
+        <img src="/static/favicon.ico" width="32" height="32" onerror="this.style.display='none'">
+        局域网文件仓库
+    </div>
+    <div class="nav-links">
+        <a href="/">上传</a>
+        <a href="/store" class="active">仓库</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="tab-bar">
+        <div class="tab-item active" onclick="switchTab('image')">图片预览</div>
+        <div class="tab-item" onclick="switchTab('file')">文件列表</div>
+        <div class="tab-item" onclick="switchTab('record')">留言板</div>
+    </div>
+
+    <div class="content">
+        <!-- 工具栏 -->
+        <div id="toolbar" class="toolbar">
+            <div id="status-text" style="color: #888; font-size: 14px;">正在加载...</div>
+            <div class="btn-group">
+                <button onclick="toggleSelectAll()">全选 / 取消</button>
+                <button class="primary" onclick="batchDownload()">批量下载</button>
+                <button class="danger" onclick="batchDelete()">批量删除</button>
+            </div>
+        </div>
+
+        <!-- 图片网格 -->
+        <div id="image-view">
+            <div class="grid" id="image-list"></div>
+        </div>
+
+        <!-- 文件表格 -->
+        <div id="file-view" style="display:none;">
+            <table class="file-table">
+                <thead>
+                    <tr>
+                        <th width="40"></th>
+                        <th>文件名</th>
+                        <th width="120">大小</th>
+                        <th width="180">修改时间</th>
+                        <th width="100">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="file-list"></tbody>
+            </table>
+        </div>
+
+        <!-- 留言记录 -->
+        <div id="record-view" style="display:none;">
+            <ul class="message-list" id="messageList"></ul>
+            <div class="message-input">
+                <input id="msgTitle" placeholder="您的昵称">
+                <input id="msgContent" placeholder="留言内容...">
+                <button onclick="sendMessage()">发送留言</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="preview" id="preview" onclick="this.style.display='none'">
+    <img id="previewImg" src="">
+</div>
+
+<script>
+    let currentTab = 'image';
+    let selectedItems = new Set();
+    let itemsData = [];
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-item').forEach(el => {
+            el.classList.toggle('active', el.innerText.includes(tab === 'image' ? '图片' : (tab === 'file' ? '文件' : '留言')));
+        });
+
+        document.getElementById('image-view').style.display = tab === 'image' ? 'block' : 'none';
+        document.getElementById('file-view').style.display = tab === 'file' ? 'block' : 'none';
+        document.getElementById('record-view').style.display = tab === 'record' ? 'block' : 'none';
+        document.getElementById('toolbar').style.display = tab === 'record' ? 'none' : 'flex';
+
+        selectedItems.clear();
+        if (tab !== 'record') loadData();
+        else loadMessages();
+    }
+
+    async function loadData() {
+        const status = document.getElementById('status-text');
+        status.innerText = '正在加载...';
+        
+        try {
+            const res = await fetch(`/api/list?type=${currentTab}`);
+            const data = await res.json();
+            itemsData = data.list || [];
+            
+            status.innerText = `共 ${itemsData.length} 个${currentTab === 'image' ? '图片' : '文件'}`;
+            
+            if (currentTab === 'image') renderImages();
+            else renderFiles();
+        } catch (e) {
+            status.innerText = '加载失败';
+        }
+    }
+
+    function renderImages() {
+        const list = document.getElementById('image-list');
+        list.innerHTML = '';
+        itemsData.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `
+                <img class="thumb" src="${item.url}" onclick="openPreview('${item.url}')">
+                <div class="item-info">${item.name}</div>
+                <div style="position:absolute; top:8px; left:8px;" class="select-box">
+                    <input type="checkbox" onchange="toggleItem('${item.name}', this.checked)">
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function renderFiles() {
+        const list = document.getElementById('file-list');
+        list.innerHTML = '';
+        itemsData.forEach(item => {
+            const tr = document.createElement('tr');
+            const size = (item.size / 1024).toFixed(1) + ' KB';
+            const time = new Date(item.time).toLocaleString();
+            tr.innerHTML = `
+                <td><input type="checkbox" onchange="toggleItem('${item.name}', this.checked)"></td>
+                <td><a href="${item.url}" download="${item.name}">${item.name}</a></td>
+                <td>${size}</td>
+                <td>${time}</td>
+                <td><button onclick="downloadOne('${item.url}', '${item.name}')">下载</button></td>
+            `;
+            list.appendChild(tr);
+        });
+    }
+
+    function toggleItem(name, checked) {
+        if (checked) selectedItems.add(name);
+        else selectedItems.delete(name);
+    }
+
+    function toggleSelectAll() {
+        const checks = document.querySelectorAll(currentTab === 'image' ? '.item input' : '#file-list input');
+        const anyUnchecked = Array.from(checks).some(c => !c.checked);
+        checks.forEach(c => {
+            c.checked = anyUnchecked;
+            const name = itemsData[Array.from(checks).indexOf(c)].name;
+            if (anyUnchecked) selectedItems.add(name);
+            else selectedItems.delete(name);
+        });
+    }
+
+    async function batchDelete() {
+        if (selectedItems.size === 0) return alert('请先选择项目');
+        if (!confirm(`确定删除选中的 ${selectedItems.size} 个项目吗？`)) return;
+
+        const res = await fetch('/api/items', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: currentTab, names: Array.from(selectedItems) })
+        });
+        if (res.ok) {
+            selectedItems.clear();
+            loadData();
+        }
+    }
+
+    function downloadOne(url, name) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        a.click();
+    }
+
+    function batchDownload() {
+        if (selectedItems.size === 0) return alert('请先选择项目');
+        const items = Array.from(selectedItems);
+        items.forEach((name, index) => {
+            const item = itemsData.find(d => d.name === name);
+            if (item) {
+                // 延迟下载防止浏览器拦截
+                setTimeout(() => downloadOne(item.url, item.name), index * 500);
+            }
+        });
+    }
+
+    function openPreview(url) {
+        document.getElementById('previewImg').src = url;
+        document.getElementById('preview').style.display = 'flex';
+    }
+
+    // --- 留言板逻辑 ---
+    async function loadMessages() {
+        const list = document.getElementById('messageList');
+        list.innerHTML = '<li>加载中...</li>';
+        const res = await fetch('/messages');
+        const data = await res.json();
+        list.innerHTML = '';
+        (data.messages || []).reverse().forEach((msg, idx) => {
+            const li = document.createElement('li');
+            li.className = 'message-item';
+            li.innerHTML = `
+                <div class="message-meta">
+                    <div>${new Date(msg.time).toLocaleString()}</div>
+                    <button class="msg-delete" onclick="deleteMessage(${data.messages.length - 1 - idx})">删除</button>
+                </div>
+                <div class="message-body">
+                    <div class="message-title">${msg.title || '匿名'}</div>
+                    <div class="message-content">${msg.content}</div>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    async function sendMessage() {
+        const title = document.getElementById('msgTitle').value;
+        const content = document.getElementById('msgContent').value;
+        if (!content) return alert('内容不能为空');
+        const res = await fetch('/message', {
+            method: 'POST',
+            body: JSON.stringify({ title, content })
+        });
+        if (res.ok) {
+            document.getElementById('msgContent').value = '';
+            loadMessages();
+        }
+    }
+
+    async function deleteMessage(index) {
+        if (!confirm('删除这条留言？')) return;
+        await fetch(`/message/${index}`, { method: 'DELETE' });
+        loadMessages();
+    }
+
+    // 初始化加载
+    loadData();
+</script>
+</body>
+</html>
