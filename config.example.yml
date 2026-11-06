@@ -1,0 +1,25 @@
+Database: test
+Host: 127.0.0.1
+Password: ""            # MySQL 密码
+Port: 3306
+UserName: root
+Security:
+    AuthEnabled: false
+    CryptoEnabled: false
+    CryptoKey: ""
+    CryptoVerifyPerMinute: 6
+    LoginLockMinutes: 10
+    LoginMaxFails: 5
+    MaxUploadMB: 2048
+    MaxWSClients: 64
+    Password: ""        # 留空则首次启动自动生成并回写
+    RatePerMinute: 240
+    SessionTTLHours: 168
+Server:
+    Host: 0.0.0.0
+    MDNS: false
+    Port: 8000
+    TLS:
+        Enabled: true
+        HTTPRedirect: true
+        Port: 8443

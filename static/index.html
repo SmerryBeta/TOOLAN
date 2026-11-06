@@ -3,149 +3,375 @@
 <head>
     <meta charset="UTF-8">
     <title>图片上传</title>
+    <script src="/toolan-crypto.js"></script>
+    <script src="/gate.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
     <style>
         :root {
-            --primary: #1f8ef1;
-            --bg: #f4f7f9;
+            --night: #0B1322;
+            --night-deep: #060A13;
+            --gold: #0B83F1;
+            --gold-bright: #82BCFA;
+            --text: rgba(255,255,255,.92);
+            --text-2: rgba(255,255,255,.62);
+            --text-3: rgba(255,255,255,.42);
+            --line: rgba(255,255,255,.15);
+            --line-strong: rgba(255,255,255,.30);
+            --glass: rgba(255,255,255,.06);
+            --glass-strong: rgba(255,255,255,.10);
+            --glass-hover: rgba(255,255,255,.14);
+            --blur: 40px;
+            --blur-lg: 60px;
+            --spring: cubic-bezier(0.16,1,0.3,1);
+            --dur: 500ms;
+            --radius: 16px;
+            --radius-lg: 24px;
+            --shadow-glass: 0 16px 40px rgba(3,7,18,.5), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(2,6,16,.35);
+            --shadow-glass-lg: 0 24px 64px rgba(3,7,18,.6), inset 0 1px 0 rgba(255,255,255,.32), inset 0 -1px 0 rgba(2,6,16,.35);
+            --shadow-glass-sm: 0 8px 24px rgba(3,7,18,.45), inset 0 1px 0 rgba(255,255,255,.18);
+            --danger: #F87171;
         }
+        * { box-sizing: border-box; }
+        html { color-scheme: dark; }
         body {
             margin: 0;
-            background: var(--bg);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background-color: var(--night);
+            background-image:
+                radial-gradient(640px circle at 85% 6%, rgba(124,156,196,.26), transparent 60%),
+                radial-gradient(560px circle at 8% 92%, rgba(51,81,122,.34), transparent 62%),
+                radial-gradient(420px circle at 55% 46%, rgba(11,131,241,.07), transparent 58%);
+            background-attachment: fixed;
+        }
+        /* 全屏颗粒噪点（2.5%）：消除玻璃塑料感 */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            pointer-events: none;
+            opacity: .025;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
-        /* 导航栏 */
         .navbar {
-            background: #fff;
-            padding: 0 24px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             position: sticky;
             top: 0;
             z-index: 100;
+            height: 64px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,.06);
+            -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            border-bottom: 1px solid rgba(255,255,255,.10);
+            box-shadow: 0 8px 24px rgba(3,7,18,.35), inset 0 1px 0 rgba(255,255,255,.14);
         }
         .nav-brand {
             font-size: 20px;
-            font-weight: bold;
-            color: var(--primary);
+            font-weight: 700;
+            color: var(--gold-bright);
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .nav-links {
-            display: flex;
-            gap: 20px;
-        }
+        .nav-links { display: flex; gap: 8px; }
         .nav-links a {
             text-decoration: none;
-            color: #666;
-            font-weight: 500;
-            transition: color 0.3s;
+            color: var(--text-2);
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 14px;
+            border: 1px solid transparent;
+            transition: all var(--dur) var(--spring);
         }
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--primary);
+        .nav-links a:hover { color: var(--text); background: rgba(255,255,255,.08); }
+        .nav-links a.active {
+            color: var(--gold-bright);
+            background: rgba(11,131,241,.12);
+            border-color: rgba(11,131,241,.35);
         }
 
         #app {
+            position: relative;
             max-width: 900px;
             margin: 40px auto;
-            background: #fff;
-            padding: 32px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            padding: 36px;
+            background: var(--glass);
+            -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-glass);
+            overflow: hidden;
+        }
+        /* 顶部受光内发光 */
+        #app::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 160px;
+            background: linear-gradient(to bottom, rgba(255,255,255,.10), transparent);
+            pointer-events: none;
+        }
+        #app > * { position: relative; }
+
+        .welcome-section { text-align: center; margin-bottom: 30px; }
+        .welcome-section h2 { margin: 0; color: var(--text); letter-spacing: .02em; }
+        .welcome-section p { color: var(--text-2); margin-top: 8px; }
+
+        .folder-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .folder-row label { font-weight: 600; color: var(--text-2); white-space: nowrap; }
+        .folder-row input {
+            flex: 1;
+            height: 44px;
+            padding: 0 14px;
+            font-size: 14px;
+            color: var(--text);
+            background: rgba(255,255,255,.07);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(2,6,16,.3);
+            transition: all var(--dur) var(--spring);
+        }
+        .folder-row input::placeholder { color: var(--text-3); }
+        .folder-row input:focus {
+            outline: none;
+            border-color: rgba(11,131,241,.45);
+            background: rgba(255,255,255,.10);
+            box-shadow: 0 0 0 3px rgba(11,131,241,.18);
         }
 
-        .welcome-section {
-            text-align: center;
-            margin-bottom: 30px;
+        .sync-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            font-size: 14px;
+            color: var(--text-2);
+            cursor: pointer;
+            user-select: none;
         }
-        .welcome-section h2 { margin: 0; color: #333; }
-        .welcome-section p { color: #888; margin-top: 8px; }
+        .sync-row input { cursor: pointer; accent-color: var(--gold); width: 16px; height: 16px; }
+        .sync-row .hint { font-size: 12px; color: var(--text-3); }
 
         .drop-area {
-            border: 2px dashed #ccd5db;
-            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1.5px dashed rgba(255,255,255,.22);
+            border-radius: var(--radius-lg);
             padding: 60px 40px;
             text-align: center;
             cursor: pointer;
-            color: #7a8b9a;
-            background: #fafbfc;
-            transition: all 0.3s;
+            color: var(--text-2);
+            background: rgba(255,255,255,.04);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+            backdrop-filter: blur(var(--blur)) saturate(180%);
+            box-shadow: var(--shadow-glass-sm);
+            transition: all var(--dur) var(--spring);
         }
         .drop-area:hover {
-            border-color: var(--primary);
-            background: #f0f7ff;
-            color: var(--primary);
+            border-color: rgba(11,131,241,.5);
+            background: rgba(11,131,241,.06);
+            color: var(--gold-bright);
+            transform: translateY(-2px);
         }
 
         .file-list {
             margin-top: 30px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--line);
             padding-top: 20px;
         }
         .file-item {
             display: flex;
             align-items: center;
             padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
+            background: var(--glass);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
             margin-bottom: 10px;
             gap: 12px;
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            box-shadow: var(--shadow-glass-sm);
+            transition: all var(--dur) var(--spring);
         }
+        .file-item:hover { border-color: var(--line-strong); transform: translateY(-1px); }
         .file-icon {
-            width: 40px;
-            height: 40px;
-            background: #eee;
-            border-radius: 6px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            overflow: hidden;
+            font-size: 14px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid var(--line);
         }
         .file-icon img { width: 100%; height: 100%; object-fit: cover; }
-        .file-info { flex: 1; }
-        .file-name { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
-        
-        /* 进度条 */
+        .file-info { flex: 1; min-width: 0; }
+        .file-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .progress-container {
             height: 6px;
-            background: #eee;
             border-radius: 3px;
             overflow: hidden;
-            margin-top: 4px;
+            background: rgba(255,255,255,.08);
+            box-shadow: inset 0 1px 0 rgba(2,6,16,.4);
         }
         .progress-bar {
             height: 100%;
-            background: var(--primary);
             width: 0%;
-            transition: width 0.2s;
+            border-radius: 3px;
+            background: linear-gradient(90deg, rgba(11,131,241,.85), rgba(130,188,250,.95));
+            box-shadow: 0 0 12px rgba(11,131,241,.35);
+            transition: width .4s var(--spring);
         }
 
-        .actions {
-            margin-top: 30px;
-            display: flex;
-            justify-content: center;
-        }
+        .actions { margin-top: 30px; display: flex; justify-content: center; }
 
         .btn-upload {
-            padding: 12px 40px;
-            border-radius: 8px;
-            border: none;
+            padding: 13px 44px;
+            border-radius: var(--radius);
+            border: 1px solid rgba(11,131,241,.4);
             cursor: pointer;
-            background: var(--primary);
-            color: #fff;
+            background: rgba(11,131,241,.15);
+            color: var(--gold-bright);
             font-size: 16px;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(31,142,241,0.3);
-            transition: transform 0.2s, opacity 0.2s;
+            font-weight: 700;
+            box-shadow: 0 4px 20px rgba(11,131,241,.15), inset 0 1px 0 rgba(130,188,250,.35);
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            transition: all var(--dur) var(--spring);
         }
-        .btn-upload:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-upload:active { transform: scale(0.98); }
+        .btn-upload:hover:not(:disabled) {
+            background: rgba(11,131,241,.22);
+            border-color: rgba(11,131,241,.55);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(11,131,241,.22), inset 0 1px 0 rgba(130,188,250,.4);
+        }
+        .btn-upload:active:not(:disabled) { transform: scale(.97); }
+        .btn-upload:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .toast-wrap {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 200;
+        }
+        .toast-item {
+            min-width: 200px;
+            max-width: 320px;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            background: rgba(10,16,30,.72);
+            color: var(--text);
+            font-size: 14px;
+            border: 1px solid var(--line);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+            backdrop-filter: blur(var(--blur)) saturate(180%);
+            box-shadow: var(--shadow-glass);
+            animation: toast-in .3s var(--spring);
+        }
+        .toast-item.success { border-color: rgba(134,239,172,.4); color: #BBF7D0; }
+        .toast-item.error { border-color: rgba(248,113,113,.4); color: #FCA5A5; }
+        @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+        /* 同名冲突确认弹窗 */
+        .modal-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(4,8,18,.6);
+            -webkit-backdrop-filter: blur(24px) saturate(140%);
+            backdrop-filter: blur(24px) saturate(140%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+        }
+        .modal {
+            position: relative;
+            background: rgba(255,255,255,.08);
+            -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            width: 440px;
+            max-width: calc(100vw - 40px);
+            box-shadow: var(--shadow-glass-lg);
+            overflow: hidden;
+        }
+        .modal::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 120px;
+            background: linear-gradient(to bottom, rgba(255,255,255,.12), transparent);
+            pointer-events: none;
+        }
+        .modal > * { position: relative; }
+        .modal h3 { margin: 0 0 12px; font-size: 17px; color: var(--text); }
+        .modal .file-names {
+            max-height: 220px;
+            overflow-y: auto;
+            font-size: 13px;
+            color: var(--text-2);
+            line-height: 1.9;
+            background: rgba(255,255,255,.05);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 10px 14px;
+            word-break: break-all;
+        }
+        .modal .tip { font-size: 12px; color: var(--text-3); margin-top: 10px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .modal-actions button {
+            padding: 10px 20px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,.07);
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--dur) var(--spring);
+        }
+        .modal-actions button:hover { border-color: var(--line-strong); background: var(--glass-hover); transform: translateY(-1px); }
+        .modal-actions button:active { transform: scale(.97); }
+        .modal-actions button.primary {
+            background: rgba(11,131,241,.15);
+            border-color: rgba(11,131,241,.4);
+            color: var(--gold-bright);
+            box-shadow: 0 4px 20px rgba(11,131,241,.15), inset 0 1px 0 rgba(130,188,250,.35);
+        }
+        .modal-actions button.primary:hover { background: rgba(11,131,241,.22); border-color: rgba(11,131,241,.55); }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; animation: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -167,12 +393,27 @@
         <p>支持任意类型文件上传，最大化局域网协作效率</p>
     </div>
 
+    <div class="folder-row">
+        <label for="folderInput">目标文件夹</label>
+        <input id="folderInput" type="text" list="folderOptions" v-model="folder"
+               placeholder="留空=未分类，支持 / 分隔多级，如 旅行/2024">
+        <datalist id="folderOptions">
+            <option v-for="f in folderOptions" :key="f" :value="f"></option>
+        </datalist>
+    </div>
+
+    <label class="sync-row">
+        <input type="checkbox" v-model="syncToPhone">
+        同步到手机
+        <span class="hint">（上传成功后推送到安卓端，手机确认后才会下载）</span>
+    </label>
+
     <div class="drop-area"
          @dragover.prevent
          @drop.prevent="onDrop"
          @click="$refs.file.click()">
         <div style="font-size: 40px; margin-bottom: 10px;">☁️</div>
-        <div>拖拽文件到这里，或点击选择</div>
+        <div>拖拽文件、Ctrl+V 粘贴截图/文件，或点击选择</div>
         <div style="font-size: 12px; margin-top: 8px; opacity: 0.7;">支持多选上传</div>
     </div>
 
@@ -194,8 +435,10 @@
                     <div class="progress-bar" :style="{ width: f.progress + '%' }"></div>
                 </div>
             </div>
-            <div style="font-size: 12px; color: #999; width: 40px; text-align: right;">
-                {{ f.progress }}%
+            <div style="font-size: 12px; color: #999; width: 52px; text-align: right;">
+                <span v-if="f.status === 'skipped'">已跳过</span>
+                <span v-else-if="f.status === 'error'" style="color:#b91c1c;">失败</span>
+                <template v-else>{{ f.progress }}%</template>
             </div>
         </div>
     </div>
@@ -205,6 +448,31 @@
             {{ uploading ? '正在上传...' : '立即上传' }}
         </button>
     </div>
+
+    <div class="toast-wrap">
+        <div v-for="t in toasts" :key="t.id" class="toast-item" :class="t.type">{{ t.text }}</div>
+    </div>
+
+    <div class="modal-mask" v-if="conflict.visible">
+        <div class="modal">
+            <h3 v-if="conflict.askEach">文件已存在（{{ conflict.pos + 1 }}/{{ conflict.items.length }}）</h3>
+            <h3 v-else>{{ conflict.items.length }} 个文件与仓库同名</h3>
+            <div class="file-names" v-if="conflict.askEach">{{ conflict.items[conflict.pos].name }}</div>
+            <div class="file-names" v-else>
+                <div v-for="(it, i) in conflict.items" :key="i">{{ it.name }}</div>
+            </div>
+            <div class="tip">覆盖会用本次上传的文件替换仓库里的同名文件</div>
+            <div class="modal-actions" v-if="conflict.askEach">
+                <button @click="conflictSkip()">跳过</button>
+                <button class="primary" @click="conflictOverwrite()">覆盖</button>
+            </div>
+            <div class="modal-actions" v-else>
+                <button @click="conflictSkip()">全部跳过</button>
+                <button @click="conflictAskEach()">逐个询问</button>
+                <button class="primary" @click="conflictOverwrite()">全部覆盖</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -213,10 +481,66 @@
         data() {
             return {
                 files: [],
-                uploading: false
+                uploading: false,
+                folder: '',
+                folderOptions: [],
+                syncToPhone: false,
+                conflict: { visible: false, items: [], pos: 0, askEach: false, out: [], resolve: null },
+                toasts: [],
+                toastSeq: 0
             }
         },
+        watch: {
+            syncToPhone(v) {
+                try { localStorage.setItem('toolan_sync_mobile', v ? '1' : '0') } catch (e) { }
+            }
+        },
+        created() {
+            try { this.syncToPhone = localStorage.getItem('toolan_sync_mobile') === '1' } catch (e) { }
+            this.loadFolderOptions()
+        },
+        mounted() {
+            document.addEventListener('paste', this.onPaste)
+        },
+        beforeDestroy() {
+            document.removeEventListener('paste', this.onPaste)
+        },
         methods: {
+            onPaste(e) {
+                const items = (e.clipboardData && e.clipboardData.items) || []
+                const picked = []
+                for (const item of items) {
+                    if (item.kind !== 'file') continue
+                    const file = item.getAsFile()
+                    if (file) picked.push(file)
+                }
+                // 无文件时不动默认行为（如在输入框粘贴文本）
+                if (picked.length === 0) return
+                e.preventDefault()
+                this.addFiles(picked)
+                this.notify('已从剪贴板添加 ' + picked.length + ' 个文件', 'success')
+            },
+            notify(text, type = '') {
+                const id = ++this.toastSeq
+                this.toasts.push({ id, text, type })
+                setTimeout(() => {
+                    const i = this.toasts.findIndex(t => t.id === id)
+                    if (i >= 0) this.toasts.splice(i, 1)
+                }, 3200)
+            },
+            async loadFolderOptions() {
+                try {
+                    const types = ['image', 'file']
+                    const results = await Promise.all(
+                        types.map(t => fetch('/api/list?type=' + t).then(r => r.json()).catch(() => ({})))
+                    )
+                    const set = new Set()
+                    results.forEach(data => (data.folders || []).forEach(f => set.add(f.name)))
+                    this.folderOptions = Array.from(set).sort()
+                } catch (e) {
+                    this.folderOptions = []
+                }
+            },
             onSelect(e) {
                 this.addFiles(e.target.files)
             },
@@ -237,26 +561,121 @@
                 }
             },
             async uploadAll() {
+                if (this.uploading) return
                 this.uploading = true
-                for (let i = 0; i < this.files.length; i++) {
-                    if (this.files[i].status === 'success') continue
-                    await this.uploadSingle(i)
+                try {
+                    const folder = (this.folder && this.folder.trim()) || ''
+
+                    // 预检同名冲突，避免大文件先传一遍才被 409 拒绝；预检失败则忽略（服务端 409 兜底）
+                    const conflicts = []
+                    for (let i = 0; i < this.files.length; i++) {
+                        const f = this.files[i]
+                        if (f.status === 'success' || f.status === 'skipped') continue
+                        if (await this.checkExists(f.name, folder)) {
+                            conflicts.push({ index: i, name: f.name })
+                        }
+                    }
+                    if (conflicts.length > 0) {
+                        const decisions = await this.askConflicts(conflicts)
+                        decisions.forEach(d => {
+                            if (d.overwrite) this.files[d.index].overwrite = true
+                            else this.files[d.index].status = 'skipped'
+                        })
+                    }
+
+                    for (let i = 0; i < this.files.length; i++) {
+                        const st = this.files[i].status
+                        if (st === 'success' || st === 'skipped') continue
+                        await this.uploadSingle(i)
+                    }
+
+                    const allDone = this.files.every(f => f.status === 'success' || f.status === 'skipped')
+                    if (allDone) {
+                        const ok = this.files.filter(f => f.status === 'success').length
+                        const skip = this.files.filter(f => f.status === 'skipped').length
+                        this.notify(skip > 0 ? ('完成：上传 ' + ok + ' 个，跳过 ' + skip + ' 个') : '全部文件上传完成', 'success')
+                        this.files = []
+                    }
+                } finally {
+                    this.uploading = false
                 }
-                this.uploading = false
-                const allSuccess = this.files.every(f => f.status === 'success')
-                if (allSuccess) {
-                    alert('全部文件上传完成！')
-                    this.files = []
+            },
+            async checkExists(name, folder) {
+                try {
+                    const r = await fetch('/api/upload/check', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: name, folder: folder })
+                    })
+                    if (!r.ok) return false
+                    const data = await r.json()
+                    return !!data.exists
+                } catch (e) {
+                    return false
+                }
+            },
+            // 弹窗收集冲突决策；resolve 为 [{index, overwrite}]。默认按钮是"跳过"以防手滑覆盖。
+            askConflicts(items) {
+                return new Promise(resolve => {
+                    this.conflict = {
+                        visible: true, items, pos: 0,
+                        askEach: items.length === 1, out: [], resolve
+                    }
+                })
+            },
+            conflictSkip() { this.answerConflict(false) },
+            conflictOverwrite() { this.answerConflict(true) },
+            conflictAskEach() { this.conflict.askEach = true },
+            answerConflict(overwrite) {
+                const c = this.conflict
+                if (c.askEach) {
+                    c.out.push({ index: c.items[c.pos].index, overwrite: overwrite })
+                    c.pos++
+                    if (c.pos < c.items.length) return
+                    c.visible = false
+                    c.resolve(c.out)
+                } else {
+                    c.visible = false
+                    c.resolve(c.items.map(it => ({ index: it.index, overwrite: overwrite })))
                 }
             },
             uploadSingle(index) {
+                const fileObj = this.files[index]
+                const folder = (this.folder && this.folder.trim()) || ''
+                const query = {}
+                if (this.syncToPhone) query.sync = 1
+                if (fileObj.overwrite) query.overwrite = 1
+
+                // 加密模式：走 A1 分块信封上传（文件名也在密文里），进度按块计算
+                if (window.ToolanA1 && ToolanA1.isActive()) {
+                    return ToolanA1.encryptedUpload(fileObj.raw, {
+                        folder: folder,
+                        query: query,
+                        onProgress: (done, total) => {
+                            fileObj.progress = Math.round((done / total) * 100)
+                        }
+                    }).then((res) => {
+                        if (res && res.message) {
+                            this.markUploaded(fileObj, res)
+                        } else {
+                            fileObj.status = 'error'
+                            this.notify(fileObj.name + ' 上传失败', 'error')
+                        }
+                    }).catch((err) => {
+                        this.markUploadFailed(fileObj, err)
+                    })
+                }
                 return new Promise((resolve) => {
-                    const fileObj = this.files[index]
                     const fd = new FormData()
                     fd.append('file', fileObj.raw)
+                    if (folder) {
+                        fd.append('folder', folder)
+                    }
 
+                    const qs = Object.keys(query).map(k =>
+                        encodeURIComponent(k) + '=' + encodeURIComponent(query[k])).join('&')
                     const xhr = new XMLHttpRequest()
-                    xhr.open('POST', '/upload', true)
+                    xhr.open('POST', qs ? ('/upload?' + qs) : '/upload', true)
 
                     xhr.upload.onprogress = (e) => {
                         if (e.lengthComputable) {
@@ -266,11 +685,11 @@
 
                     xhr.onload = () => {
                         if (xhr.status === 200) {
-                            fileObj.status = 'success'
-                            fileObj.progress = 100
+                            let res = null
+                            try { res = JSON.parse(xhr.responseText) } catch (e) { }
+                            this.markUploaded(fileObj, res)
                         } else {
-                            fileObj.status = 'error'
-                            alert(fileObj.name + ' 上传失败')
+                            this.markUploadFailed(fileObj, { status: xhr.status })
                         }
                         resolve()
                     }
@@ -282,6 +701,24 @@
 
                     xhr.send(fd)
                 })
+            },
+            // 上传成功：勾选了同步但手机不在线时明确提示（delivered=送达的安卓客户端数）
+            markUploaded(fileObj, res) {
+                fileObj.status = 'success'
+                fileObj.progress = 100
+                if (this.syncToPhone && res && res.delivered === 0) {
+                    this.notify(fileObj.name + '：手机不在线，本次未同步', 'error')
+                }
+            },
+            markUploadFailed(fileObj, err) {
+                // 409：预检之后、真正上传之前被其他设备抢先写入——跳过，不覆盖
+                if (err && err.status === 409) {
+                    fileObj.status = 'skipped'
+                    this.notify(fileObj.name + ' 已存在（刚被其他设备上传），已跳过')
+                    return
+                }
+                fileObj.status = 'error'
+                this.notify(fileObj.name + ' 上传失败', 'error')
             }
         }
     })

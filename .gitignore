@@ -1,0 +1,29 @@
+# 本地配置（含密码，绝不入库）
+config.yml
+
+# 运行时用户数据（文件仓库的实际内容，均为私人文件）
+static/data/
+static/files/
+static/images/
+
+# 本地构建/部署脚本
+build.ps1
+publish.ps1
+publish.bat
+run_dev.bat
+
+# 临时验证脚本
+_a1_check.js
+_check.js
+_ws_check.js
+
+# 页面依赖走 CDN，本地 node_modules 未使用
+node_modules/
+package.json
+package-lock.json
+
+# IDE
+.idea/
+
+# 未被引用的多余资源
+static/favicon1.ico

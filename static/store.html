@@ -2,476 +2,3063 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>图片仓库 & 留言</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件仓库</title>
+    <script src="/toolan-crypto.js"></script>
+    <script src="/gate.js"></script>
     <style>
-        /* ===== 全局 ===== */
         :root {
-            --primary: #1f8ef1;
-            --danger: #ff4d4f;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            background: #f6f7f9;
-            color: #333;
+            --night: #0B1322;
+            --night-deep: #060A13;
+            --steel: #16233A;
+            --moon: #7C9CC4;
+            --moon-deep: #33517A;
+            --gold: #0B83F1;
+            --gold-bright: #82BCFA;
+            --text: rgba(255,255,255,.92);
+            --text-2: rgba(255,255,255,.62);
+            --text-3: rgba(255,255,255,.42);
+            --line: rgba(255,255,255,.15);
+            --line-strong: rgba(255,255,255,.30);
+            --glass: rgba(255,255,255,.06);
+            --glass-strong: rgba(255,255,255,.10);
+            --glass-hover: rgba(255,255,255,.14);
+            --danger: #F87171;
+            --blur: 40px;
+            --blur-lg: 60px;
+            --spring: cubic-bezier(0.16,1,0.3,1);
+            --dur: 500ms;
+            --radius: 16px;
+            --radius-lg: 24px;
+            --shadow-glass: 0 16px 40px rgba(3,7,18,.5), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(2,6,16,.35);
+            --shadow-glass-lg: 0 24px 64px rgba(3,7,18,.6), inset 0 1px 0 rgba(255,255,255,.32), inset 0 -1px 0 rgba(2,6,16,.35);
+            --shadow-glass-sm: 0 8px 24px rgba(3,7,18,.45), inset 0 1px 0 rgba(255,255,255,.18);
         }
 
-        /* 导航栏 */
+        * { box-sizing: border-box; }
+
+        html { color-scheme: dark; }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background-color: var(--night);
+            background-image:
+                radial-gradient(640px circle at 85% 6%, rgba(124,156,196,.26), transparent 60%),
+                radial-gradient(560px circle at 6% 94%, rgba(51,81,122,.34), transparent 62%),
+                radial-gradient(420px circle at 55% 48%, rgba(11,131,241,.07), transparent 58%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* 全屏颗粒噪点（2.5%）：消除玻璃塑料感 */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            pointer-events: none;
+            opacity: .025;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        ::selection { background: rgba(11,131,241,.3); }
+
         .navbar {
-            background: #fff;
-            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
             height: 64px;
+            padding: 0 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            background: rgba(255,255,255,.06);
+            -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            border-bottom: 1px solid rgba(255,255,255,.10);
+            box-shadow: 0 8px 24px rgba(3,7,18,.35), inset 0 1px 0 rgba(255,255,255,.14);
         }
-        .nav-brand {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--primary);
+
+        .brand {
             display: flex;
             align-items: center;
             gap: 10px;
+            color: var(--gold-bright);
+            font-size: 18px;
+            font-weight: 700;
         }
-        .nav-links {
-            display: flex;
-            gap: 20px;
-        }
+
+        .nav-links { display: flex; gap: 8px; }
         .nav-links a {
+            color: var(--text-2);
             text-decoration: none;
-            color: #666;
-            font-weight: 500;
-            transition: color 0.3s;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 14px;
+            border: 1px solid transparent;
+            transition: all var(--dur) var(--spring);
         }
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--primary);
+        .nav-links a:hover { color: var(--text); background: rgba(255,255,255,.08); }
+        .nav-links a.active {
+            color: var(--gold-bright);
+            background: rgba(11,131,241,.12);
+            border-color: rgba(11,131,241,.35);
         }
 
-        .container {
-            max-width: 1100px;
-            margin: 20px auto;
-            padding: 16px;
+        main {
+            width: min(1180px, calc(100vw - 32px));
+            margin: 18px auto 32px;
         }
 
-        .tab-bar {
+        .tabs {
             display: flex;
-            background: #fff;
-            border-bottom: 1px solid #e6e6e6;
-            border-radius: 8px 8px 0 0;
+            gap: 6px;
+            padding: 6px;
+            background: var(--glass);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+            backdrop-filter: blur(var(--blur)) saturate(180%);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-glass-sm);
+            overflow-x: auto;
+            overflow-y: hidden;
+            max-width: 100%;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+
+        .tab {
+            flex: 0 0 auto;
+            min-width: max-content;
+            min-height: 40px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-2);
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            white-space: nowrap;
+            font-weight: 700;
+            transition: all var(--dur) var(--spring);
+        }
+
+        .tab:hover { color: var(--text); background: rgba(255,255,255,.08); }
+
+        .tab.active {
+            color: #fff;
+            background: var(--glass-hover);
+            border-color: var(--line-strong);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 4px 14px rgba(3,7,18,.35);
+        }
+
+        .panel {
+            position: relative;
+            margin-top: 12px;
+            background: var(--glass);
+            -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-glass);
+            min-height: 560px;
             overflow: hidden;
         }
 
-        .tab-item {
-            padding: 14px 24px;
-            cursor: pointer;
-            color: #666;
-            user-select: none;
-            transition: all 0.2s;
+        /* 玻璃顶部受光内发光 */
+        .panel::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 140px;
+            background: linear-gradient(to bottom, rgba(255,255,255,.10), transparent);
+            pointer-events: none;
+            z-index: 1;
         }
 
-        .tab-item.active {
-            color: var(--primary);
-            border-bottom: 3px solid var(--primary);
-            font-weight: 600;
-            background: #f0f7ff;
-        }
-
-        .content {
-            padding: 20px;
-            background: #fff;
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            min-height: 400px;
-        }
-
-        /* 工具栏 */
         .toolbar {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #f0f0f0;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px;
+            border-bottom: 1px solid var(--line);
+            flex-wrap: wrap;
         }
-        .btn-group { display: flex; gap: 10px; }
-        button {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-            background: #fff;
-            cursor: pointer;
+
+        .filters, .actions, .reminder-form, .message-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .clip-form {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        textarea {
+            flex: 1;
+            min-width: 200px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: rgba(255,255,255,.07);
+            padding: 10px 12px;
+            color: var(--text);
+            font: inherit;
+            resize: vertical;
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(2,6,16,.3);
+            transition: all var(--dur) var(--spring);
+        }
+        textarea::placeholder { color: var(--text-3); }
+        textarea:focus {
+            outline: none;
+            border-color: rgba(11,131,241,.45);
+            background: rgba(255,255,255,.10);
+            box-shadow: 0 0 0 3px rgba(11,131,241,.18);
+        }
+
+        .clip-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            color: var(--text-2);
+            line-height: 1.55;
+            max-height: 200px;
+            overflow: auto;
+        }
+
+        select, input {
+            height: 38px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255,255,255,.07);
+            padding: 0 12px;
+            color: var(--text);
+            font: inherit;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(2,6,16,.3);
+            transition: all var(--dur) var(--spring);
+        }
+        select option { background: var(--steel); color: #fff; }
+        select:focus, input:focus {
+            outline: none;
+            border-color: rgba(11,131,241,.45);
+            background: rgba(255,255,255,.10);
+            box-shadow: 0 0 0 3px rgba(11,131,241,.18);
+        }
+        input::placeholder { color: var(--text-3); }
+
+        input[type="datetime-local"] { min-width: 210px; }
+        input[type="time"] { min-width: 120px; }
+
+        input[type="checkbox"] {
+            height: auto;
+            width: 16px;
+            padding: 0;
+            border: 0;
+            accent-color: var(--gold);
+        }
+
+        .zip-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255,255,255,.07);
+            color: var(--text);
             font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            transition: all var(--dur) var(--spring);
+        }
+        .zip-toggle:hover { border-color: var(--line-strong); background: var(--glass-hover); }
+
+        button {
+            min-height: 38px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255,255,255,.07);
+            color: var(--text);
+            padding: 0 14px;
+            cursor: pointer;
+            font-weight: 700;
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(2,6,16,.3);
+            transition: all var(--dur) var(--spring);
+        }
+
+        button:hover {
+            border-color: var(--line-strong);
+            background: var(--glass-hover);
+            transform: translateY(-1px);
+        }
+        button:active { transform: scale(.97); }
+        button.primary, button.accent {
+            background: rgba(11,131,241,.15);
+            color: var(--gold-bright);
+            border-color: rgba(11,131,241,.4);
+            box-shadow: 0 4px 20px rgba(11,131,241,.15), inset 0 1px 0 rgba(130,188,250,.35);
+        }
+        button.primary:hover, button.accent:hover {
+            background: rgba(11,131,241,.22);
+            border-color: rgba(11,131,241,.55);
+        }
+        button.danger {
+            background: rgba(248,113,113,.14);
+            color: #FCA5A5;
+            border-color: rgba(248,113,113,.4);
+            box-shadow: 0 4px 20px rgba(248,113,113,.12), inset 0 1px 0 rgba(252,165,165,.3);
+        }
+        button.danger:hover { background: rgba(248,113,113,.22); border-color: rgba(248,113,113,.55); }
+        button.ghost { background: transparent; border-color: transparent; box-shadow: none; }
+        button.ghost:hover { background: rgba(255,255,255,.08); border-color: transparent; }
+
+        .status {
+            color: var(--text-2);
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .grid {
+            padding: 14px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 14px;
+        }
+
+        .item {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--glass);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+            backdrop-filter: blur(var(--blur)) saturate(180%);
+            box-shadow: var(--shadow-glass-sm);
+            cursor: pointer;
+            transition: all var(--dur) var(--spring);
+        }
+
+        .item:hover {
+            border-color: var(--line-strong);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glass);
+        }
+
+        .item.selected {
+            border-color: rgba(11,131,241,.6);
+            box-shadow: 0 0 0 3px rgba(11,131,241,.22), var(--shadow-glass-sm);
+        }
+
+        .thumb, .video-thumb {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            display: block;
+            object-fit: cover;
+            background: var(--night-deep);
+        }
+
+        .audio-thumb {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--moon-deep), var(--steel));
+            color: var(--moon);
+            font-size: 46px;
+            font-weight: 800;
+        }
+
+        .folder-thumb {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 52px;
+            background: rgba(11,131,241,.08);
+        }
+
+        .breadcrumb {
             display: flex;
             align-items: center;
             gap: 6px;
+            flex-wrap: wrap;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--line);
+            font-size: 14px;
+            color: var(--text-2);
         }
-        button:hover { background: #f5f5f5; }
-        button.primary { background: var(--primary); color: #fff; border: none; }
-        button.danger { background: var(--danger); color: #fff; border: none; }
 
-        /* 图片网格 */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 20px;
+        .breadcrumb .crumb {
+            border: 0;
+            background: transparent;
+            color: var(--gold-bright);
+            font-weight: 700;
+            padding: 2px 4px;
+            min-height: auto;
+            box-shadow: none;
         }
-        .item { 
-            position: relative; 
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #eee;
-            transition: transform 0.2s;
-        }
-        .item:hover { transform: translateY(-4px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
-        img.thumb {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            cursor: pointer;
-        }
+        .breadcrumb .crumb:hover { background: rgba(255,255,255,.08); transform: none; }
+        .breadcrumb .crumb.current { color: var(--text); }
+        .breadcrumb .sep { color: var(--text-3); }
+        .breadcrumb .spacer { flex: 1; }
+        .breadcrumb .crumb-actions { display: flex; gap: 6px; }
+        .breadcrumb .crumb-actions button { height: 28px; min-height: 28px; font-size: 13px; padding: 0 10px; }
+
         .item-info {
-            padding: 8px;
-            font-size: 12px;
-            background: #fff;
-            white-space: nowrap;
+            padding: 9px 10px 10px;
+            display: grid;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .name {
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 13px;
+            font-weight: 700;
+            min-width: 0;
+            color: var(--text);
         }
 
-        /* 文件列表表格 */
-        .file-table {
+        .meta {
+            color: var(--text-2);
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background: var(--gold);
+            color: #FFFFFF;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            box-shadow: 0 4px 14px rgba(11,131,241,.4);
+        }
+
+        .item.selected .badge { display: flex; }
+
+        table {
             width: 100%;
             border-collapse: collapse;
         }
-        .file-table th {
-            text-align: left;
-            background: #fafafa;
-            padding: 12px;
-            border-bottom: 2px solid #eee;
-            color: #666;
-            font-size: 14px;
-        }
-        .file-table td {
-            padding: 12px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
-        }
-        .file-table tr:hover { background: #fafafa; }
 
-        .select-box {
+        th, td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            text-align: left;
+            font-size: 14px;
+            color: var(--text);
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        th {
+            color: var(--text-2);
+            background: rgba(255,255,255,.04);
+            font-size: 13px;
+        }
+
+        tr { cursor: pointer; transition: background var(--dur) var(--spring); }
+        tr:hover { background: rgba(255,255,255,.04); }
+        tr.selected { background: rgba(11,131,241,.10); }
+
+        .table-wrap { overflow-x: auto; }
+
+        .section { padding: 14px; }
+
+        .reminder-list, .message-list, .clip-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 12px;
+            min-width: 0;
+        }
+
+        .calendar-toolbar {
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 14px;
+            border-bottom: 1px solid var(--line);
+            flex-wrap: wrap;
         }
-        .select-box input { width: 18px; height: 18px; cursor: pointer; }
 
-        /* preview overlay */
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calendar-nav button {
+            width: 38px;
+            padding: 0;
+            font-size: 20px;
+        }
+
+        .calendar-title {
+            min-width: 140px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--gold-bright);
+        }
+
+        .calendar-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+            gap: 16px;
+            padding: 14px;
+        }
+
+        .calendar-wrap {
+            min-width: 0;
+        }
+
+        .calendar-weekdays,
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .calendar-weekdays {
+            margin-bottom: 8px;
+            color: var(--text-2);
+            font-size: 13px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .calendar-day {
+            min-height: 78px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: var(--glass);
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            color: var(--text);
+            padding: 8px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            font-size: 14px;
+            font-weight: 800;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+            transition: all var(--dur) var(--spring);
+        }
+
+        .calendar-day.is-muted {
+            color: var(--text-3);
+            background: rgba(255,255,255,.02);
+        }
+
+        .calendar-day.has-events {
+            border-color: rgba(124,156,196,.45);
+            background: rgba(124,156,196,.10);
+        }
+
+        .calendar-day.is-today {
+            border-color: rgba(11,131,241,.55);
+            color: var(--gold-bright);
+            box-shadow: inset 0 0 0 1px rgba(11,131,241,.35);
+        }
+
+        .calendar-day.is-selected {
+            border-color: rgba(11,131,241,.65);
+            background: rgba(11,131,241,.18);
+            color: var(--gold-bright);
+            box-shadow: none;
+        }
+
+        .calendar-day:hover { border-color: var(--line-strong); }
+
+        .day-panel {
+            min-width: 0;
+            display: grid;
+            align-content: start;
+            gap: 12px;
+        }
+
+        .day-heading {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--gold-bright);
+        }
+
+        .row-card {
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 12px;
+            display: grid;
+            gap: 8px;
+            background: var(--glass);
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            box-shadow: var(--shadow-glass-sm);
+            min-width: 0;
+            transition: all var(--dur) var(--spring);
+        }
+        .row-card:hover { border-color: var(--line-strong); }
+
+        .row-card.done { opacity: .62; }
+
+        .message-item {
+            display: grid;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .message-time {
+            justify-self: center;
+            color: var(--text-3);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .message-card {
+            position: relative;
+            padding-right: 44px;
+        }
+
+        .row-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .row-title { font-weight: 800; min-width: 0; overflow-wrap: anywhere; word-break: break-word; color: var(--text); }
+        .row-content { color: var(--text-2); line-height: 1.55; overflow-wrap: anywhere; word-break: break-word; }
+
+        .message-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            min-height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text-3);
+            padding: 0;
+            font-size: 22px;
+            font-weight: 500;
+            line-height: 1;
+            box-shadow: none;
+        }
+
+        .message-close:hover {
+            background: rgba(255,255,255,.08);
+            color: var(--text);
+            transform: none;
+        }
+
         .preview {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.85);
+            z-index: 90;
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
+            padding: 20px;
+            background: rgba(4,8,18,.86);
+            -webkit-backdrop-filter: blur(30px) saturate(150%);
+            backdrop-filter: blur(30px) saturate(150%);
         }
-        .preview img { max-width: 90%; max-height: 90%; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
 
-        /* messages */
-        #record-view { display: flex; flex-direction: column; height: 70vh; }
-        .message-list {
-            list-style: none;
-            padding: 0;
+        .preview.open { display: flex; }
+        /* 图片预览手势：禁掉浏览器默认触摸行为，缩放平移由脚本接管 */
+        #previewImg { touch-action: none; -webkit-user-select: none; user-select: none; }
+        /* 预览层右上角操作按钮组（下载/分享）：容器随预览层出现，按钮各自按场景显隐 */
+        .preview-actions {
+            display: none;
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 60;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .preview.open .preview-actions { display: flex; }
+        .preview-share {
+            padding: 9px 20px;
+            border: 1px solid rgba(11,131,241,.4);
+            border-radius: 18px;
+            background: rgba(11,131,241,.15);
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            color: var(--gold-bright);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(11,131,241,.15), inset 0 1px 0 rgba(130,188,250,.35);
+            transition: all var(--dur) var(--spring);
+        }
+        .preview-share:hover {
+            background: rgba(11,131,241,.22);
+            border-color: rgba(11,131,241,.55);
+            transform: translateY(-1px);
+        }
+        .preview-share:active { transform: scale(.97); }
+        .preview img, .preview video, .preview audio {
+            max-width: min(1100px, 94vw);
+            max-height: 88vh;
+            border-radius: var(--radius);
+            background: #000;
+        }
+
+        .preview audio {
+            width: min(680px, 94vw);
+            background: rgba(240,243,248,.92);
+        }
+
+        .preview iframe, .preview .doc-box {
+            width: min(1100px, 94vw);
+            height: 88vh;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            background: rgba(244,246,250,.97);
+            box-shadow: var(--shadow-glass);
+        }
+
+        .doc-box {
+            overflow: auto;
+            padding: 20px 24px;
+        }
+
+        .doc-box pre {
             margin: 0;
-            overflow-y: auto;
-            flex: 1;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: ui-monospace, SFMono-Regular, Consolas, "Microsoft YaHei", monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #1f2937;
+        }
+
+        .doc-box .md-body { max-width: 760px; margin: 0 auto; line-height: 1.7; color: #1f2937; }
+        .doc-box table { background: #fff; color: #1f2937; }
+
+        .toast {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 100;
+            display: grid;
+            gap: 8px;
+        }
+
+        .toast-item {
+            width: min(360px, calc(100vw - 32px));
+            background: rgba(10,16,30,.72);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 12px 14px;
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
+            backdrop-filter: blur(var(--blur)) saturate(180%);
+            box-shadow: var(--shadow-glass);
+        }
+
+        .toast-title { font-weight: 800; margin-bottom: 4px; color: var(--gold-bright); }
+        .empty { padding: 36px 14px; text-align: center; color: var(--text-3); }
+
+        /* ---- 通用弹窗（替代 alert / confirm / prompt）---- */
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-mask {
+            position: absolute;
+            inset: 0;
+            background: rgba(4,8,18,.6);
+            -webkit-backdrop-filter: blur(24px) saturate(140%);
+            backdrop-filter: blur(24px) saturate(140%);
+            opacity: 0;
+            transition: opacity var(--dur) var(--spring);
+        }
+
+        .modal.open .modal-mask { opacity: 1; }
+
+        .modal-box {
+            position: relative;
+            width: min(480px, 100%);
+            max-height: 88vh;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            background: rgba(255,255,255,.08);
+            -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-glass-lg);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(12px) scale(.98);
+            transition: opacity var(--dur) var(--spring), transform var(--dur) var(--spring);
         }
-        .message-item {
-            display: flex;
-            gap: 15px;
-            background: #f9f9f9;
-            padding: 16px;
-            border-radius: 10px;
-            border: 1px solid #eee;
-        }
-        .message-meta { width: 150px; color: #888; font-size: 12px; }
-        .message-body { flex: 1; }
-        .message-title { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; }
-        .message-content { line-height: 1.5; color: #555; }
-        .msg-delete { color: var(--danger); border: none; background: none; cursor: pointer; padding: 0; }
 
-        .message-input {
-            margin-top: 20px;
+        .modal.open .modal-box { opacity: 1; transform: none; }
+
+        .modal-head {
             display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 10px;
-            background: #fff;
-            padding: 15px;
-            border-top: 1px solid #eee;
+            padding: 15px 18px;
+            border-bottom: 1px solid var(--line);
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text);
         }
-        .message-input input {
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            flex: 1;
+
+        .modal-x {
+            flex: 0 0 auto;
+            border: 0;
+            background: transparent;
+            min-height: 0;
+            padding: 0 2px;
+            font-size: 24px;
+            line-height: 1;
+            color: var(--text-2);
+            box-shadow: none;
         }
-        .message-input button {
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            padding: 10px 24px;
-            font-weight: 600;
+
+        .modal-x:hover { background: transparent; border-color: transparent; color: var(--text); transform: none; }
+
+        .modal-body {
+            padding: 18px;
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text);
+            overflow: auto;
+        }
+
+        .modal-foot { padding: 12px 18px 16px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .modal-actions button { flex: 0 0 auto; min-width: 92px; }
+
+        .field-label { font-size: 13px; color: var(--text-2); margin-bottom: 6px; }
+        .modal-body .prompt-input { width: 100%; box-sizing: border-box; }
+        .modal-body input.invalid { border-color: rgba(248,113,113,.55); }
+
+        /* 文件夹选择器 */
+        .folder-picker { display: grid; gap: 10px; }
+        .picker-crumb { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; font-size: 14px; }
+        .picker-crumb .crumb { border: 0; background: transparent; color: var(--gold-bright); font-weight: 700; padding: 2px 4px; min-height: auto; flex: 0 0 auto; box-shadow: none; }
+        .picker-crumb .crumb:hover { background: rgba(255,255,255,.08); transform: none; }
+        .picker-crumb .crumb.current { color: var(--text); }
+        .picker-crumb .sep { color: var(--text-3); }
+        .picker-target { font-size: 13px; color: var(--text-2); padding: 2px 0 6px; }
+        .picker-target b { color: var(--gold-bright); }
+        .picker-list { display: grid; gap: 6px; max-height: 44vh; overflow: auto; }
+        .picker-item { display: flex; align-items: center; gap: 10px; width: 100%; justify-content: flex-start; text-align: left; font-weight: 600; flex: 0 0 auto; }
+        .picker-icon { font-size: 18px; flex: 0 0 auto; }
+        .picker-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .picker-count { color: var(--text-2); font-size: 12px; flex: 0 0 auto; }
+        .picker-go { color: var(--gold-bright); font-size: 12px; flex: 0 0 auto; }
+        .picker-empty { font-size: 14px; color: var(--text-3); text-align: center; padding: 18px; border: 1px dashed rgba(255,255,255,.2); border-radius: var(--radius); }
+        .picker-new { justify-self: start; flex: 0 0 auto; }
+
+        /* zip 内容浏览 */
+        .zip-browser { display: grid; gap: 10px; }
+        .zip-tip { font-size: 13px; color: var(--text-2); }
+        .zip-list { display: grid; gap: 6px; max-height: 52vh; overflow: auto; }
+        .zip-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; background: var(--glass); -webkit-backdrop-filter: blur(30px) saturate(160%); backdrop-filter: blur(30px) saturate(160%); transition: all var(--dur) var(--spring); }
+        .zip-row:hover { border-color: var(--line-strong); background: var(--glass-hover); }
+        .zip-icon { font-size: 18px; flex: 0 0 auto; }
+        .zip-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+        .zip-size { color: var(--text-2); font-size: 12px; flex: 0 0 auto; }
+        .zip-open { flex: 0 0 auto; min-width: 60px; min-height: 0; padding: 4px 10px; font-size: 13px; }
+        .modal-box:has(.zip-browser) { width: min(680px, 100%); }
+
+        /* 显眼 rename 入口 + Office 预览渲染 */
+        .inline-rename { margin-top: 8px; align-self: flex-start; border: 1px solid var(--line); background: transparent; color: var(--text-2); font-size: 12px; font-weight: 600; min-height: 0; padding: 4px 10px; border-radius: 12px; box-shadow: none; }
+        .inline-rename:hover { color: var(--gold-bright); border-color: rgba(11,131,241,.5); background: rgba(11,131,241,.08); }
+        .office-sheet-name { font-weight: 800; margin: 14px 0 6px; color: #1f2937; }
+        .office-table { overflow: auto; margin-bottom: 8px; background: #fff; }
+        .office-table table { border-collapse: collapse; width: auto; }
+        .office-table td, .office-table th { border: 1px solid #d1d5db; padding: 4px 8px; font-size: 13px; white-space: nowrap; color: #1f2937; }
+        #previewDoc .docx-wrapper { background: transparent; padding: 0; }
+        #previewDoc section.docx { box-shadow: 0 2px 12px rgba(0,0,0,.12); margin-bottom: 16px; }
+
+        /* 移动端：模糊与阴影缩放，布局适配 */
+        @media (max-width: 640px) {
+            .navbar { padding: 0 14px; }
+            main { width: calc(100vw - 20px); margin-top: 10px; }
+            .toolbar { align-items: stretch; }
+            .filters, .actions, .reminder-form, .message-form { width: 100%; }
+            select, input, button { flex: 1; min-width: 0; }
+            textarea { min-width: 0; }
+            .zip-toggle, input[type="checkbox"] { flex: none; min-width: 0; }
+            .calendar-toolbar { align-items: stretch; }
+            .calendar-nav { flex: 1; justify-content: space-between; }
+            .calendar-nav button {
+                flex: none;
+                min-width: 38px;
+            }
+            .calendar-title { min-width: 0; }
+            .calendar-layout {
+                grid-template-columns: 1fr;
+                gap: 14px;
+                padding: 10px;
+            }
+            .calendar-weekdays,
+            .calendar-grid {
+                gap: 5px;
+            }
+            .calendar-day {
+                min-height: 52px;
+                padding: 6px;
+                font-size: 13px;
+            }
+            .tabs {
+                gap: 8px;
+                padding: 6px 10px;
+            }
+            .tabs .tab {
+                flex: 0 0 auto;
+                min-width: max-content;
+            }
+            .message-close {
+                flex: none;
+                min-width: 28px;
+            }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(142px, 1fr)); gap: 10px; padding: 10px; }
+            th, td { padding: 10px; }
+            /* 高斯模糊在小屏降档，保证 WebView 流畅 */
+            .item, .row-card, .calendar-day, .zip-row, .file-item {
+                -webkit-backdrop-filter: blur(30px) saturate(160%);
+                backdrop-filter: blur(30px) saturate(160%);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; animation: none !important; }
         }
     </style>
 </head>
 <body>
-
-<div class="navbar">
-    <div class="nav-brand">
-        <img src="/static/favicon.ico" width="32" height="32" onerror="this.style.display='none'">
-        局域网文件仓库
+<nav class="navbar">
+    <div class="brand">
+        <img src="/static/favicon.ico" width="28" height="28" style="border-radius: 20%" alt="">
+        <span>局域网文件仓库</span>
     </div>
     <div class="nav-links">
         <a href="/">上传</a>
         <a href="/store" class="active">仓库</a>
     </div>
-</div>
+</nav>
 
-<div class="container">
-    <div class="tab-bar">
-        <div class="tab-item active" onclick="switchTab('image')">图片预览</div>
-        <div class="tab-item" onclick="switchTab('file')">文件列表</div>
-        <div class="tab-item" onclick="switchTab('record')">留言板</div>
+<main>
+    <div class="tabs">
+        <button class="tab active" data-tab="image">图片</button>
+        <button class="tab" data-tab="video">视频</button>
+        <button class="tab" data-tab="audio">音频</button>
+        <button class="tab" data-tab="file">文件</button>
+        <button class="tab" data-tab="reminder">日期提醒</button>
+        <button class="tab" data-tab="message">消息</button>
+        <button class="tab" data-tab="clipboard">剪贴板</button>
     </div>
 
-    <div class="content">
-        <!-- 工具栏 -->
-        <div id="toolbar" class="toolbar">
-            <div id="status-text" style="color: #888; font-size: 14px;">正在加载...</div>
-            <div class="btn-group">
-                <button onclick="toggleSelectAll()">全选 / 取消</button>
-                <button class="primary" onclick="batchDownload()">批量下载</button>
-                <button class="danger" onclick="batchDelete()">批量删除</button>
+    <section class="panel" id="assetPanel">
+        <div class="breadcrumb" id="breadcrumb" hidden></div>
+        <div class="toolbar">
+            <div class="filters">
+                <span class="status" id="statusText">正在加载...</span>
+                <select id="sortSelect">
+                    <option value="createdAt">时间</option>
+                    <option value="size">大小</option>
+                    <option value="type">类型</option>
+                    <option value="name">名称</option>
+                </select>
+                <select id="orderSelect">
+                    <option value="desc">降序</option>
+                    <option value="asc">升序</option>
+                </select>
+                <select id="categorySelect">
+                    <option value="all">全部</option>
+                    <option value="image">图片</option>
+                    <option value="video">视频</option>
+                    <option value="audio">音频</option>
+                    <option value="document">文档</option>
+                    <option value="archive">压缩包</option>
+                    <option value="other">其它</option>
+                </select>
+            </div>
+            <div class="actions">
+                <button id="newFolderBtn">新建文件夹</button>
+                <button id="selectModeBtn">选择</button>
+                <label id="zipToggleWrap" class="zip-toggle" hidden><input type="checkbox" id="zipToggle" checked> 打包ZIP</label>
+                <button id="selectAllBtn" class="ghost" hidden>全选</button>
+                <button id="moveBtn" hidden>移动到</button>
+                <button id="renameBtn" hidden>重命名</button>
+                <button id="downloadBtn" class="primary" hidden>下载</button>
+                <button id="deleteBtn" class="danger" hidden>删除</button>
             </div>
         </div>
+        <div id="assetView"></div>
+    </section>
 
-        <!-- 图片网格 -->
-        <div id="image-view">
-            <div class="grid" id="image-list"></div>
+    <section class="panel" id="reminderPanel" hidden>
+        <div class="calendar-toolbar">
+            <div class="calendar-nav">
+                <button id="prevMonthBtn" type="button" aria-label="上个月">‹</button>
+                <div class="calendar-title" id="calendarTitle"></div>
+                <button id="nextMonthBtn" type="button" aria-label="下个月">›</button>
+            </div>
+            <button id="todayBtn" type="button">今天</button>
+            <button id="toggleDoneBtn" type="button">显示已完成</button>
         </div>
-
-        <!-- 文件表格 -->
-        <div id="file-view" style="display:none;">
-            <table class="file-table">
-                <thead>
-                    <tr>
-                        <th width="40"></th>
-                        <th>文件名</th>
-                        <th width="120">大小</th>
-                        <th width="180">修改时间</th>
-                        <th width="100">操作</th>
-                    </tr>
-                </thead>
-                <tbody id="file-list"></tbody>
-            </table>
-        </div>
-
-        <!-- 留言记录 -->
-        <div id="record-view" style="display:none;">
-            <ul class="message-list" id="messageList"></ul>
-            <div class="message-input">
-                <input id="msgTitle" placeholder="您的昵称">
-                <input id="msgContent" placeholder="留言内容...">
-                <button onclick="sendMessage()">发送留言</button>
+        <div class="calendar-layout">
+            <div class="calendar-wrap">
+                <div class="calendar-weekdays">
+                    <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+            <div class="day-panel">
+                <div class="day-heading" id="selectedDateLabel"></div>
+                <div class="reminder-form">
+                    <input id="reminderTitle" placeholder="标题">
+                    <input id="reminderContent" placeholder="消息内容">
+                    <input id="reminderTime" type="time" value="09:00">
+                    <button class="accent" id="addReminderBtn">添加</button>
+                </div>
+                <div class="reminder-list" id="reminderList"></div>
             </div>
         </div>
+    </section>
+
+    <section class="panel" id="messagePanel" hidden>
+        <div class="toolbar">
+            <div class="message-form">
+                <input id="msgTitle" placeholder="标题">
+                <input id="msgContent" placeholder="消息内容">
+                <button class="primary" id="sendMsgBtn">发送</button>
+            </div>
+        </div>
+        <div class="section">
+            <div class="message-list" id="messageList"></div>
+        </div>
+    </section>
+
+    <section class="panel" id="clipboardPanel" hidden>
+        <div class="toolbar">
+            <div class="clip-form">
+                <textarea id="clipInput" rows="2" placeholder="粘贴或输入文本，同步到所有设备…"></textarea>
+                <button class="primary" id="syncClipBtn">同步</button>
+                <button id="pasteClipBtn">读取剪贴板</button>
+                <button class="ghost" id="clearClipBtn">清空</button>
+            </div>
+        </div>
+        <div class="section">
+            <div class="clip-list" id="clipList"></div>
+        </div>
+    </section>
+</main>
+
+<div class="preview" id="preview">
+    <div class="preview-actions" id="previewActions">
+        <button id="previewDownload" class="preview-share" hidden>下载</button>
+        <button id="previewShare" class="preview-share" hidden>分享</button>
     </div>
+    <img id="previewImg" alt="" hidden>
+    <video id="previewVideo" controls hidden></video>
+    <audio id="previewAudio" controls hidden></audio>
+    <iframe id="previewFrame" hidden></iframe>
+    <div id="previewDoc" class="doc-box" hidden></div>
 </div>
+<div class="toast" id="toast"></div>
 
-<div class="preview" id="preview" onclick="this.style.display='none'">
-    <img id="previewImg" src="">
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-    let currentTab = 'image';
-    let selectedItems = new Set();
-    let itemsData = [];
+    const state = {
+        tab: 'image',
+        items: [],
+        selected: new Set(),
+        selectMode: false,
+        includeDone: false,
+        reminders: [],
+        selectedDate: new Date(),
+        calendarMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+        longPressTimer: null,
+        packageZip: localStorage.getItem('packageZip') !== 'false',
+        currentFolder: '',
+        folders: [],
+        previewItem: null // 当前预览层展示的文件(分享按钮用)
+    };
 
-    function switchTab(tab) {
-        currentTab = tab;
-        document.querySelectorAll('.tab-item').forEach(el => {
-            el.classList.toggle('active', el.innerText.includes(tab === 'image' ? '图片' : (tab === 'file' ? '文件' : '留言')));
-        });
+    const assetPanel = document.getElementById('assetPanel');
+    const reminderPanel = document.getElementById('reminderPanel');
+    const messagePanel = document.getElementById('messagePanel');
+    const clipboardPanel = document.getElementById('clipboardPanel');
+    const assetView = document.getElementById('assetView');
+    const breadcrumb = document.getElementById('breadcrumb');
+    const statusText = document.getElementById('statusText');
+    const sortSelect = document.getElementById('sortSelect');
+    const orderSelect = document.getElementById('orderSelect');
+    const categorySelect = document.getElementById('categorySelect');
 
-        document.getElementById('image-view').style.display = tab === 'image' ? 'block' : 'none';
-        document.getElementById('file-view').style.display = tab === 'file' ? 'block' : 'none';
-        document.getElementById('record-view').style.display = tab === 'record' ? 'block' : 'none';
-        document.getElementById('toolbar').style.display = tab === 'record' ? 'none' : 'flex';
+    document.querySelectorAll('.tab').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+    sortSelect.addEventListener('change', onFilterChange);
+    orderSelect.addEventListener('change', onFilterChange);
+    categorySelect.addEventListener('change', onFilterChange);
+    document.getElementById('selectModeBtn').addEventListener('click',
+        () => setSelectMode(!state.selectMode, { back: true }));
+    document.getElementById('selectAllBtn').addEventListener('click', toggleSelectAll);
+    document.getElementById('downloadBtn').addEventListener('click', batchDownload);
+    const zipToggle = document.getElementById('zipToggle');
+    zipToggle.checked = state.packageZip;
+    zipToggle.addEventListener('change', () => {
+        state.packageZip = zipToggle.checked;
+        localStorage.setItem('packageZip', String(zipToggle.checked));
+    });
+    document.getElementById('deleteBtn').addEventListener('click', batchDelete);
+    document.getElementById('moveBtn').addEventListener('click', moveSelected);
+    document.getElementById('renameBtn').addEventListener('click', renameSelected);
+    document.getElementById('newFolderBtn').addEventListener('click', createFolder);
+    document.getElementById('addReminderBtn').addEventListener('click', addReminder);
+    document.getElementById('prevMonthBtn').addEventListener('click', () => changeCalendarMonth(-1));
+    document.getElementById('nextMonthBtn').addEventListener('click', () => changeCalendarMonth(1));
+    document.getElementById('todayBtn').addEventListener('click', selectToday);
+    document.getElementById('toggleDoneBtn').addEventListener('click', () => toggleDone());
+    document.getElementById('sendMsgBtn').addEventListener('click', sendMessage);
+    document.getElementById('syncClipBtn').addEventListener('click', addClip);
+    document.getElementById('pasteClipBtn').addEventListener('click', readClipboardIntoInput);
+    document.getElementById('clearClipBtn').addEventListener('click', clearClips);
+    document.getElementById('preview').addEventListener('click', () => closePreview());
+    ['previewImg', 'previewVideo', 'previewAudio', 'previewFrame', 'previewDoc'].forEach(id => {
+        document.getElementById(id).addEventListener('click', event => event.stopPropagation());
+    });
 
-        selectedItems.clear();
-        if (tab !== 'record') loadData();
-        else loadMessages();
+    // ---- hash 路由:把 tab / 文件夹 / 筛选 / 多选 / 日历 / 预览层 / 模态逐层记入浏览器历史 ----
+    // WebView 与桌面浏览器的前进后退因此可用:后退依次关预览→关模态→退多选→回上级文件夹/上个月→回上个标签页
+    const ROUTE_TABS = ['image', 'video', 'audio', 'file', 'reminder', 'message', 'clipboard'];
+    const ASSET_TABS = ['image', 'video', 'audio', 'file'];
+
+    function monthKey(date) {
+        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
     }
 
-    async function loadData() {
-        const status = document.getElementById('status-text');
-        status.innerText = '正在加载...';
-        
-        try {
-            const res = await fetch(`/api/list?type=${currentTab}`);
-            const data = await res.json();
-            itemsData = data.list || [];
-            
-            status.innerText = `共 ${itemsData.length} 个${currentTab === 'image' ? '图片' : '文件'}`;
-            
-            if (currentTab === 'image') renderImages();
-            else renderFiles();
-        } catch (e) {
-            status.innerText = '加载失败';
+    function currentHash() {
+        let path = state.tab;
+        if (ASSET_TABS.includes(state.tab) && state.currentFolder) {
+            path += '/' + state.currentFolder;
+        }
+        if (state.tab === 'reminder') {
+            path += '/' + monthKey(state.calendarMonth);
+        }
+        const q = new URLSearchParams();
+        if (ASSET_TABS.includes(state.tab)) {
+            q.set('sort', sortSelect.value);
+            q.set('order', orderSelect.value);
+            if (state.tab === 'file' && !categorySelect.hidden) q.set('cat', categorySelect.value);
+            if (state.selectMode) q.set('select', '1');
+        }
+        if (state.tab === 'reminder') {
+            // 选中日在当前展示月时记录,翻月不丢选中日
+            if (monthKey(state.selectedDate) === monthKey(state.calendarMonth)) {
+                q.set('d', String(state.selectedDate.getDate()));
+            }
+            q.set('done', state.includeDone ? '1' : '0');
+        }
+        const qs = q.toString();
+        return '#' + encodeURIComponent(path) + (qs ? '?' + qs : '');
+    }
+
+    function pushRoute() {
+        if (location.hash === currentHash()) return;
+        history.pushState(null, '', currentHash());
+    }
+
+    function previewOpen() {
+        return document.getElementById('preview').classList.contains('open');
+    }
+
+    function openPreviewLayer() {
+        document.getElementById('preview').classList.add('open');
+        const item = state.previewItem;
+        // 下载按钮：图片预览时提供（PC 与 App 均可用）
+        const dlBtn = document.getElementById('previewDownload');
+        if (dlBtn) {
+            dlBtn.hidden = !(item && item.mediaType === 'image');
+            dlBtn.onclick = () => { if (state.previewItem) downloadOne(state.previewItem); };
+        }
+        // 分享按钮仅 App 内且确有预览文件时可见;PC 浏览器保持原界面
+        const shareBtn = document.getElementById('previewShare');
+        if (shareBtn) {
+            shareBtn.hidden = !(window.ToolanShare && item);
+            shareBtn.onclick = () => { if (state.previewItem) shareFile(state.previewItem); };
+        }
+        history.pushState(null, '', '#view');
+    }
+
+    // 排序/分类变化:刷新列表并记入历史
+    function onFilterChange() {
+        loadAssets();
+        pushRoute();
+    }
+
+    // 把 hash 中的排序/分类写回下拉框(只写值,不加载);返回是否有变化。
+    // 分类下拉是否可见由目标 tab 决定(调用时界面可能还在旧 tab)
+    function preApplyAssetQuery(query, target) {
+        const setIfValid = (sel, val) => {
+            if (!val || sel.value === val) return false;
+            if (![...sel.options].some(o => o.value === val)) return false;
+            sel.value = val;
+            return true;
+        };
+        let changed = false;
+        if (setIfValid(sortSelect, query.get('sort'))) changed = true;
+        if (setIfValid(orderSelect, query.get('order'))) changed = true;
+        if (target === 'file' && setIfValid(categorySelect, query.get('cat'))) changed = true;
+        return changed;
+    }
+
+    // 提醒页路由恢复:rest 为 YYYY-MM,query.d 为选中日,query.done 控制是否显示已完成
+    function applyReminderRoute(rest, query) {
+        const m = /^(\d{4})-(\d{2})$/.exec(rest || '');
+        const now = new Date();
+        const date = new Date(
+            m ? +m[1] : now.getFullYear(),
+            m ? +m[2] - 1 : now.getMonth(),
+            parseInt(query.get('d') || '', 10) || now.getDate()
+        );
+        const dateChanged = dateKey(state.selectedDate) !== dateKey(date)
+            || monthKey(state.calendarMonth) !== monthKey(date);
+        if (dateChanged) selectCalendarDate(date, true);
+
+        const wantDone = query.get('done') === '1';
+        if (state.includeDone !== wantDone) {
+            state.includeDone = wantDone;
+            document.getElementById('toggleDoneBtn').textContent = wantDone ? '隐藏已完成' : '显示已完成';
+            loadReminders();
         }
     }
 
-    function renderImages() {
-        const list = document.getElementById('image-list');
-        list.innerHTML = '';
-        itemsData.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            div.innerHTML = `
-                <img class="thumb" src="${item.url}" onclick="openPreview('${item.url}')">
-                <div class="item-info">${item.name}</div>
-                <div style="position:absolute; top:8px; left:8px;" class="select-box">
-                    <input type="checkbox" onchange="toggleItem('${item.name}', this.checked)">
-                </div>
-            `;
-            list.appendChild(div);
-        });
+    function parseRoute() {
+        const raw = location.hash.slice(1);
+        const qi = raw.indexOf('?');
+        const path = decodeURIComponent(qi < 0 ? raw : raw.slice(0, qi));
+        const query = new URLSearchParams(qi < 0 ? '' : raw.slice(qi + 1));
+        const sep = path.indexOf('/');
+        return {
+            tabName: sep < 0 ? path : path.slice(0, sep),
+            rest: sep < 0 ? '' : path.slice(sep + 1),
+            query
+        };
     }
 
-    function renderFiles() {
-        const list = document.getElementById('file-list');
-        list.innerHTML = '';
-        itemsData.forEach(item => {
+    // popstate / 初始加载时按 hash 恢复界面
+    function applyRoute() {
+        // 预览层/模态:开着就不动;没开说明是刷新后的残留 hash,清洗成当前路由再继续解析
+        const rawHead = parseRoute().tabName;
+        if (rawHead === 'view') {
+            if (previewOpen()) return;
+            history.replaceState(null, '', currentHash());
+        } else if (rawHead === 'modal') {
+            if (modalStack.length) {
+                if (previewOpen()) closePreview(true);  // 模态之上叠了预览时,先只关预览
+                return;
+            }
+            history.replaceState(null, '', currentHash());
+        }
+        if (previewOpen()) { closePreview(true); return; }
+        if (modalStack.length) {
+            modalStack[modalStack.length - 1].finish(false, true); // 后退一次关一层模态
+            return;
+        }
+
+        const { tabName, rest, query } = parseRoute();
+        const target = ROUTE_TABS.includes(tabName) ? tabName : 'image';
+        const wantSelect = query.get('select') === '1';
+
+        // 多选:仅处理"后退离开多选"(select 从有到无/切走),不反向重开
+        if (state.selectMode && (!wantSelect || target !== state.tab)) {
+            setSelectMode(false, { fromRoute: true });
+        }
+
+        // 先写筛选值再切 tab,保证 switchTab/openFolder 里的 loadAssets 用的是恢复后的值
+        let filterChanged = false;
+        if (ASSET_TABS.includes(target)) filterChanged = preApplyAssetQuery(query, target);
+        if (target !== state.tab) switchTab(target, { fromRoute: true });
+        if (ASSET_TABS.includes(target)) {
+            if (rest !== (state.currentFolder || '')) openFolder(rest, true);
+            else if (filterChanged) loadAssets();
+        } else if (target === 'reminder') {
+            applyReminderRoute(rest, query);
+        }
+    }
+
+    window.addEventListener('popstate', applyRoute);
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        if (previewOpen()) { closePreview(); return; }
+        if (!modalStack.length && state.selectMode) setSelectMode(false, { back: true });
+    });
+
+    function switchTab(tab, opts) {
+        const fromRoute = opts && opts.fromRoute;
+        state.tab = tab;
+        state.selected.clear();
+        state.currentFolder = '';
+        setSelectMode(false);
+        document.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+
+        const assetTab = ['image', 'video', 'audio', 'file'].includes(tab);
+        assetPanel.hidden = !assetTab;
+        reminderPanel.hidden = tab !== 'reminder';
+        messagePanel.hidden = tab !== 'message';
+        clipboardPanel.hidden = tab !== 'clipboard';
+        categorySelect.hidden = tab === 'image' || tab === 'video' || tab === 'audio';
+
+        if (assetTab) loadAssets();
+        if (tab === 'reminder') loadReminders();
+        if (tab === 'message') loadMessages();
+        if (tab === 'clipboard') loadClips();
+        if (!fromRoute) pushRoute();
+    }
+
+    async function loadAssets() {
+        statusText.textContent = '正在加载...';
+        const params = new URLSearchParams({
+            type: state.tab,
+            sort: sortSelect.value,
+            order: orderSelect.value,
+            category: categorySelect.hidden ? 'all' : categorySelect.value,
+            folder: state.currentFolder
+        });
+        try {
+            const res = await fetch('/api/list?' + params.toString());
+            const data = await res.json();
+            state.items = data.list || [];
+            state.folders = data.folders || [];
+            revokeMediaUrls(); // 上一批媒体的 blob URL 已无引用，回收
+            statusText.textContent = `${state.items.length} 个项目`;
+            renderBreadcrumb();
+            renderAssets();
+        } catch (err) {
+            statusText.textContent = '加载失败';
+        }
+    }
+
+    function renderAssets() {
+        updateBreadcrumbVisibility();
+        const hasContent = state.items.length > 0 || state.folders.length > 0;
+        assetView.innerHTML = '';
+        if (!hasContent) {
+            assetView.appendChild(emptyNode());
+            return;
+        }
+        if (state.tab === 'file') renderFileTable();
+        else renderGrid();
+    }
+
+    function renderGrid() {
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+        state.folders.forEach(folder => grid.appendChild(folderCard(folder)));
+        state.items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'item' + (state.selected.has(item.path) ? ' selected' : '');
+            bindSelectable(card, item);
+
+            if (state.tab === 'video') {
+                const video = document.createElement('video');
+                video.className = 'video-thumb';
+                video.preload = 'metadata';
+                video.muted = true;
+                resolveMediaUrl(item).then(u => { video.src = u; });
+                card.appendChild(video);
+            } else if (state.tab === 'audio') {
+                const audioThumb = document.createElement('div');
+                audioThumb.className = 'audio-thumb';
+                audioThumb.textContent = item.ext ? item.ext.toUpperCase() : 'AUDIO';
+                card.appendChild(audioThumb);
+            } else {
+                const img = document.createElement('img');
+                img.className = 'thumb';
+                resolveMediaUrl(item).then(u => { img.src = u; });
+                img.alt = item.name;
+                card.appendChild(img);
+            }
+
+            card.appendChild(infoNode(item));
+            const badge = document.createElement('div');
+            badge.className = 'badge';
+            badge.textContent = '✓';
+            card.appendChild(badge);
+            grid.appendChild(card);
+        });
+        assetView.appendChild(grid);
+    }
+
+    function folderCard(folder) {
+        const card = document.createElement('div');
+        card.className = 'item folder-item';
+        const thumb = document.createElement('div');
+        thumb.className = 'folder-thumb';
+        thumb.textContent = '📁';
+        card.appendChild(thumb);
+        const info = document.createElement('div');
+        info.className = 'item-info';
+        appendText(info, 'name', folder.name);
+        appendText(info, 'meta', `${folder.count} 个项目`);
+        card.appendChild(info);
+        card.addEventListener('click', () => {
+            if (state.selectMode) return; // 选择模式下不进入文件夹
+            openFolder(folder.path);
+        });
+        return card;
+    }
+
+    function renderFileTable() {
+        const wrap = document.createElement('div');
+        wrap.className = 'table-wrap';
+        const table = document.createElement('table');
+        table.innerHTML = '<thead><tr><th>名称</th><th>分类</th><th>大小</th><th>添加时间</th><th>操作</th></tr></thead>';
+        const tbody = document.createElement('tbody');
+        state.folders.forEach(folder => {
             const tr = document.createElement('tr');
-            const size = (item.size / 1024).toFixed(1) + ' KB';
-            const time = new Date(item.time).toLocaleString();
-            tr.innerHTML = `
-                <td><input type="checkbox" onchange="toggleItem('${item.name}', this.checked)"></td>
-                <td><a href="${item.url}" download="${item.name}">${item.name}</a></td>
-                <td>${size}</td>
-                <td>${time}</td>
-                <td><button onclick="downloadOne('${item.url}', '${item.name}')">下载</button></td>
-            `;
-            list.appendChild(tr);
+            appendCell(tr, '📁 ' + folder.name);
+            appendCell(tr, '文件夹');
+            appendCell(tr, `${folder.count} 项`);
+            appendCell(tr, '');
+            const action = document.createElement('td');
+            const btn = document.createElement('button');
+            btn.textContent = '打开';
+            btn.addEventListener('click', event => {
+                event.stopPropagation();
+                openFolder(folder.path);
+            });
+            action.appendChild(btn);
+            tr.appendChild(action);
+            tr.addEventListener('click', () => { if (!state.selectMode) openFolder(folder.path); });
+            tbody.appendChild(tr);
+        });
+        state.items.forEach(item => {
+            const tr = document.createElement('tr');
+            if (state.selected.has(item.path)) tr.classList.add('selected');
+            bindSelectable(tr, item);
+
+            appendCell(tr, item.name);
+            appendCell(tr, labelForCategory(item.category));
+            appendCell(tr, humanSize(item.size));
+            appendCell(tr, formatTime(item.createdAt));
+            const action = document.createElement('td');
+            const btn = document.createElement('button');
+            const ext = (item.ext || '').toLowerCase();
+            const isZip = ext === 'zip';
+            const canPreview = isZip || item.mediaType === 'audio' || INLINE_DOCS.includes(ext) || OFFICE_DOCS.includes(ext);
+            btn.textContent = isZip ? '浏览' : (item.mediaType === 'audio' ? '播放' : (canPreview ? '预览' : '下载'));
+            btn.addEventListener('click', event => {
+                event.stopPropagation();
+                if (canPreview) openFile(item);
+                else downloadOne(item);
+            });
+            action.appendChild(btn);
+            const ren = document.createElement('button');
+            ren.textContent = '重命名';
+            ren.addEventListener('click', event => {
+                event.stopPropagation();
+                renameFile(item);
+            });
+            action.appendChild(ren);
+            if (window.ToolanShare) {
+                const shareBtn = document.createElement('button');
+                shareBtn.textContent = '分享';
+                shareBtn.addEventListener('click', event => {
+                    event.stopPropagation();
+                    shareFile(item);
+                });
+                action.appendChild(shareBtn);
+            }
+            tr.appendChild(action);
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+        assetView.appendChild(wrap);
+    }
+
+    function bindSelectable(node, item) {
+        node.addEventListener('click', () => {
+            if (state.selectMode) toggleItem(item.path);
+            else openFile(item);
+        });
+        node.addEventListener('mousedown', () => startLongPress(item));
+        node.addEventListener('touchstart', () => startLongPress(item), {passive: true});
+        ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(event => {
+            node.addEventListener(event, cancelLongPress);
         });
     }
 
-    function toggleItem(name, checked) {
-        if (checked) selectedItems.add(name);
-        else selectedItems.delete(name);
+    function startLongPress(item) {
+        cancelLongPress();
+        state.longPressTimer = setTimeout(() => {
+            setSelectMode(!state.selectMode, { back: true });
+            if (state.selectMode) toggleItem(item.path);
+        }, 560);
+    }
+
+    function cancelLongPress() {
+        if (state.longPressTimer) clearTimeout(state.longPressTimer);
+        state.longPressTimer = null;
+    }
+
+    function setSelectMode(enabled, opts) {
+        const fromRoute = opts && opts.fromRoute;
+        const viaBack = opts && opts.back;
+        state.selectMode = enabled;
+        if (!enabled) state.selected.clear();
+        document.getElementById('selectModeBtn').textContent = enabled ? '取消选择' : '选择';
+        document.getElementById('selectModeBtn').className = enabled ? 'danger' : '';
+        document.getElementById('selectAllBtn').hidden = !enabled;
+        document.getElementById('moveBtn').hidden = !enabled;
+        document.getElementById('renameBtn').hidden = !enabled;
+        document.getElementById('downloadBtn').hidden = !enabled;
+        document.getElementById('zipToggleWrap').hidden = !enabled;
+        document.getElementById('deleteBtn').hidden = !enabled;
+        document.getElementById('newFolderBtn').hidden = enabled;
+        if (!assetPanel.hidden) renderAssets();
+        // 进入多选记入历史,后退即可退出;用户手势退出时把那条历史一并退掉
+        if (enabled && !fromRoute) pushRoute();
+        if (!enabled && viaBack && location.hash.includes('select=1')) history.back();
+    }
+
+    function toggleItem(path) {
+        if (state.selected.has(path)) state.selected.delete(path);
+        else state.selected.add(path);
+        renderAssets();
     }
 
     function toggleSelectAll() {
-        const checks = document.querySelectorAll(currentTab === 'image' ? '.item input' : '#file-list input');
-        const anyUnchecked = Array.from(checks).some(c => !c.checked);
-        checks.forEach(c => {
-            c.checked = anyUnchecked;
-            const name = itemsData[Array.from(checks).indexOf(c)].name;
-            if (anyUnchecked) selectedItems.add(name);
-            else selectedItems.delete(name);
-        });
+        if (state.items.every(item => state.selected.has(item.path))) state.selected.clear();
+        else state.items.forEach(item => state.selected.add(item.path));
+        renderAssets();
     }
 
     async function batchDelete() {
-        if (selectedItems.size === 0) return alert('请先选择项目');
-        if (!confirm(`确定删除选中的 ${selectedItems.size} 个项目吗？`)) return;
-
+        if (state.selected.size === 0) return toast('批量操作', '请先选择项目');
+        const ok = await confirmDialog(`确定删除选中的 ${state.selected.size} 个项目？删除后不可恢复。`, { title: '删除确认', danger: true, okText: '删除' });
+        if (!ok) return;
         const res = await fetch('/api/items', {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: currentTab, names: Array.from(selectedItems) })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: state.tab, paths: Array.from(state.selected)})
         });
         if (res.ok) {
-            selectedItems.clear();
-            loadData();
+            state.selected.clear();
+            await loadAssets();
         }
     }
 
-    function downloadOne(url, name) {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = name;
-        a.click();
+    async function batchDownload() {
+        if (state.selected.size === 0) return toast('批量操作', '请先选择项目');
+        // 未勾选「打包ZIP」时，逐个保存原始文件。
+        if (!state.packageZip) return downloadEach();
+        downloadZip();
     }
 
-    function batchDownload() {
-        if (selectedItems.size === 0) return alert('请先选择项目');
-        const items = Array.from(selectedItems);
-        items.forEach((name, index) => {
-            const item = itemsData.find(d => d.name === name);
-            if (item) {
-                // 延迟下载防止浏览器拦截
-                setTimeout(() => downloadOne(item.url, item.name), index * 500);
+    // 打包 ZIP：用隐藏表单提交到隐藏 iframe，让浏览器把 zip 直接流式下载到磁盘。
+    // 相比 fetch→res.blob()，不会把可能很大的视频包整个缓冲进内存而失败/被拦截。
+    async function downloadZip() {
+        await ensureToken();
+        // 加密模式：JSON 请求体由 fetch 封装加密，响应为 A1L 流，解密后 blob 保存
+        //（大 zip 需完整解密到内存，超大文件建议逐个下载）
+        if (cryptoActive()) {
+            try {
+                const res = await fetch(withToken('/api/zip'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: state.tab, paths: Array.from(state.selected) })
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const r = await ToolanA1.decryptStream(res);
+                const blobUrl = URL.createObjectURL(r.blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = (r.meta && r.meta.name) || 'TOOLAN.zip';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => { URL.revokeObjectURL(blobUrl); a.remove(); }, 4000);
+                toast('打包下载', '已解密并开始保存');
+            } catch (err) {
+                toast('打包下载', '加密打包失败：' + err.message);
             }
+            return;
+        }
+
+        let frame = document.getElementById('zipFrame');
+        if (!frame) {
+            frame = document.createElement('iframe');
+            frame.name = 'zipFrame';
+            frame.id = 'zipFrame';
+            frame.style.display = 'none';
+            document.body.appendChild(frame);
+        }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = withToken('/api/zip');
+        form.target = 'zipFrame';
+        form.hidden = true;
+
+        const addField = (name, value) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        };
+        addField('type', state.tab);
+        addField('paths', JSON.stringify(Array.from(state.selected)));
+
+        document.body.appendChild(form);
+        form.submit();
+        setTimeout(() => form.remove(), 1500);
+        toast('打包下载', '已开始打包，下载进度见浏览器');
+    }
+
+    function downloadEach() {
+        Array.from(state.selected).forEach((path, index) => {
+            const item = state.items.find(it => it.path === path);
+            if (item) setTimeout(() => downloadOne(item), index * 350);
         });
     }
 
-    function openPreview(url) {
-        document.getElementById('previewImg').src = url;
-        document.getElementById('preview').style.display = 'flex';
+    // ---- 文件夹导航与管理 ----
+
+    function updateBreadcrumbVisibility() {
+        const assetTab = ['image', 'video', 'audio', 'file'].includes(state.tab);
+        breadcrumb.hidden = !assetTab;
     }
 
-    // --- 留言板逻辑 ---
+    function renderBreadcrumb() {
+        breadcrumb.innerHTML = '';
+        const segments = state.currentFolder ? state.currentFolder.split('/') : [];
+
+        const rootBtn = document.createElement('button');
+        rootBtn.className = 'crumb' + (segments.length === 0 ? ' current' : '');
+        rootBtn.textContent = '全部';
+        rootBtn.addEventListener('click', () => openFolder(''));
+        breadcrumb.appendChild(rootBtn);
+
+        segments.forEach((seg, i) => {
+            const sep = document.createElement('span');
+            sep.className = 'sep';
+            sep.textContent = '/';
+            breadcrumb.appendChild(sep);
+
+            const btn = document.createElement('button');
+            btn.className = 'crumb' + (i === segments.length - 1 ? ' current' : '');
+            btn.textContent = seg;
+            btn.addEventListener('click', () => openFolder(segments.slice(0, i + 1).join('/')));
+            breadcrumb.appendChild(btn);
+        });
+
+        const spacer = document.createElement('span');
+        spacer.className = 'spacer';
+        breadcrumb.appendChild(spacer);
+
+        if (segments.length > 0) {
+            const actions = document.createElement('div');
+            actions.className = 'crumb-actions';
+
+            const rename = document.createElement('button');
+            rename.textContent = '重命名';
+            rename.addEventListener('click', renameCurrentFolder);
+            const del = document.createElement('button');
+            del.className = 'danger';
+            del.textContent = '删除文件夹';
+            del.addEventListener('click', deleteCurrentFolder);
+
+            actions.append(rename, del);
+            breadcrumb.appendChild(actions);
+        }
+    }
+
+    function openFolder(path, fromRoute) {
+        state.currentFolder = path || '';
+        state.selected.clear();
+        setSelectMode(false);
+        loadAssets();
+        if (!fromRoute) pushRoute();
+    }
+
+    async function createFolder() {
+        const name = await promptDialog({
+            title: '新建文件夹',
+            label: '将创建在：' + (state.currentFolder || '根目录 / 未分类') + '（用 / 可建多级）',
+            placeholder: '文件夹名称',
+            validate: v => v ? '' : '名称不能为空'
+        });
+        if (name === null) return;
+        // 相对路径：以当前目录为前缀，但绝对路径（以 / 开头）视为从根开始。
+        const target = name.startsWith('/')
+            ? name.slice(1)
+            : (state.currentFolder ? state.currentFolder + '/' + name : name);
+        const res = await fetch('/api/folder', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: state.tab, folder: target})
+        });
+        if (res.ok) {
+            // 新建的子目录在当前视图下时刷新才能看到，直接刷新即可。
+            loadAssets();
+        } else {
+            const data = await res.json().catch(() => ({}));
+            toast('文件夹', data.error || '创建失败');
+        }
+    }
+
+    async function renameCurrentFolder() {
+        if (!state.currentFolder) return;
+        const parts = state.currentFolder.split('/');
+        const last = parts[parts.length - 1];
+        const name = await promptDialog({
+            title: '重命名文件夹',
+            label: '当前名称：' + last,
+            value: last,
+            placeholder: '新的文件夹名称',
+            validate: v => v ? '' : '名称不能为空'
+        });
+        if (name === null) return;
+        if (name === last) return;
+        parts[parts.length - 1] = name;
+        const target = parts.join('/');
+        const res = await fetch('/api/folder/rename', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: state.tab, from: state.currentFolder, to: target})
+        });
+        if (res.ok) {
+            state.currentFolder = target;
+            loadAssets();
+        } else {
+            const data = await res.json().catch(() => ({}));
+            toast('文件夹', data.error || '重命名失败');
+        }
+    }
+
+    async function deleteCurrentFolder() {
+        if (!state.currentFolder) return;
+        const ok = await confirmDialog(`删除空文件夹「${state.currentFolder}」？`, { title: '删除文件夹', danger: true, okText: '删除' });
+        if (!ok) return;
+        const res = await fetch('/api/folder', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: state.tab, folder: state.currentFolder})
+        });
+        if (res.ok) {
+            state.currentFolder = state.currentFolder.split('/').slice(0, -1).join('/');
+            loadAssets();
+        } else {
+            const data = await res.json().catch(() => ({}));
+            toast('文件夹', data.error || '删除失败（文件夹需为空）');
+        }
+    }
+
+    async function moveSelected() {
+        if (state.selected.size === 0) return toast('批量操作', '请先选择项目');
+        const target = await folderPicker({ title: `移动 ${state.selected.size} 个项目到…` });
+        if (target === null) return; // 取消
+        const res = await fetch('/api/items/move', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: state.tab, paths: Array.from(state.selected), toFolder: target})
+        });
+        if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            const failedCount = data.failed ? Object.keys(data.failed).length : 0;
+            if (failedCount > 0) {
+                const firstErr = Object.values(data.failed)[0];
+                toast('移动', `${failedCount} 个失败：${firstErr}`);
+            }
+            state.selected.clear();
+            await loadAssets();
+        } else {
+            toast('移动', '请求失败');
+        }
+    }
+
+    // 重命名单个文件的核心逻辑：只改主名、扩展名锁死（与后端一致），避免改扩展名导致文件从当前分区消失。
+    async function renameFile(item) {
+        if (!item) return toast('重命名', '未找到文件');
+        const dot = item.name.lastIndexOf('.');
+        const hasExt = dot > 0;
+        const stem = hasExt ? item.name.slice(0, dot) : item.name;
+        const ext = hasExt ? item.name.slice(dot) : '';
+
+        const name = await promptDialog({
+            title: '重命名',
+            label: `当前：${item.name}` + (ext ? `（扩展名 ${ext} 保持不变）` : ''),
+            value: stem,
+            placeholder: '新的文件名',
+            okText: '重命名',
+            validate: v => v ? '' : '名称不能为空'
+        });
+        if (name === null) return;
+        if (name === stem) return toast('重命名', '名称未变化');
+
+        const res = await fetch('/api/item/rename', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: state.tab, path: item.path, name})
+        });
+        if (res.ok) {
+            state.selected.delete(item.path);
+            await loadAssets();
+            toast('重命名', '已完成');
+        } else {
+            const data = await res.json().catch(() => ({}));
+            toast('重命名', data.error || '重命名失败');
+        }
+    }
+
+    // 选择模式工具栏入口：要求恰好选中 1 个文件。
+    function renameSelected() {
+        if (state.selected.size !== 1) return toast('重命名', '请只选择一个文件再重命名');
+        const path = Array.from(state.selected)[0];
+        renameFile(state.items.find(it => it.path === path));
+    }
+
+
+    const INLINE_DOCS = ['pdf', 'txt', 'md', 'markdown', 'json', 'log', 'csv', 'ini', 'yml', 'yaml'];
+    // Office 文档：用纯前端库渲染，动态 import jsDelivr 的 +esm 构建（依赖已打包），失败自动降级为下载提示。
+    const OFFICE_DOCS = ['docx', 'xlsx', 'pptx'];
+    const OFFICE_LIBS = {
+        docx: 'https://cdn.jsdelivr.net/npm/docx-preview@0.4.1/+esm',
+        xlsx: 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm',
+        pptx: 'https://cdn.jsdelivr.net/npm/pptx-preview@1.0.7/+esm'
+    };
+
+    function openFile(item) {
+        if ((item.ext || '').toLowerCase() === 'zip') { openZipBrowser(item); return; }
+        state.previewItem = item;
+        if (item.mediaType === 'image') {
+            resetPreview();
+            resolveMediaUrl(item).then(u => {
+                document.getElementById('previewImg').src = u;
+                document.getElementById('previewImg').hidden = false;
+                openPreviewLayer();
+            });
+            return;
+        }
+        if (item.mediaType === 'video') {
+            resetPreview();
+            resolveMediaUrl(item).then(u => {
+                const video = document.getElementById('previewVideo');
+                video.src = u;
+                video.hidden = false;
+                openPreviewLayer();
+                video.play().catch(() => {});
+            });
+            return;
+        }
+        if (item.mediaType === 'audio') {
+            resetPreview();
+            resolveMediaUrl(item).then(u => {
+                const audio = document.getElementById('previewAudio');
+                audio.src = u;
+                audio.hidden = false;
+                openPreviewLayer();
+                audio.play().catch(() => {});
+            });
+            return;
+        }
+        if (openDocument(item)) return;
+        downloadOne(item);
+    }
+
+    // openDocument previews supported text/PDF/Office files inside the modal and returns true,
+    // otherwise it returns false so the caller can fall back to downloading.
+    function openDocument(item) {
+        const ext = (item.ext || '').toLowerCase();
+        const isOffice = OFFICE_DOCS.includes(ext);
+        if (!isOffice && !INLINE_DOCS.includes(ext)) return false;
+        resetPreview();
+
+        if (ext === 'pdf') {
+            const frame = document.getElementById('previewFrame');
+            resolveMediaUrl(item).then(u => {
+                frame.src = u;
+                frame.hidden = false;
+                openPreviewLayer();
+            });
+            return true;
+        }
+
+        const doc = document.getElementById('previewDoc');
+        doc.hidden = false;
+        openPreviewLayer();
+
+        if (isOffice) {
+            renderOfficeDoc(item, ext, doc);
+            return true;
+        }
+
+        doc.innerHTML = '<p style="color:#6b7280">正在加载…</p>';
+
+        fetchMediaBlob(item)
+            .then(blob => blob.text())
+            .then(text => {
+                if (ext === 'md' || ext === 'markdown') {
+                    doc.innerHTML = window.marked
+                        ? `<div class="md-body">${window.marked.parse(text)}</div>`
+                        : `<pre>${escapeHtml(text)}</pre>`;
+                } else {
+                    doc.innerHTML = `<pre>${escapeHtml(text)}</pre>`;
+                }
+            })
+            .catch(() => {
+                doc.innerHTML = '<p style="color:#dc2626">预览加载失败，请改用下载。</p>';
+            });
+        return true;
+    }
+
+    // 用前端库把 docx/xlsx/pptx 渲染进容器；库或文件加载失败时降级为可读提示。
+    async function renderOfficeDoc(item, ext, container) {
+        container.innerHTML = '<p style="color:#6b7280">正在加载预览…（首次需联网加载渲染库）</p>';
+
+        let buffer;
+        try {
+            const blob = await fetchMediaBlob(item);
+            buffer = await blob.arrayBuffer();
+        } catch (err) {
+            container.innerHTML = '<p style="color:#dc2626">文件读取失败，请改用下载。</p>';
+            return;
+        }
+
+        try {
+            if (ext === 'docx') {
+                const mod = await import(OFFICE_LIBS.docx);
+                const renderAsync = mod.renderAsync || (mod.default && mod.default.renderAsync);
+                if (typeof renderAsync !== 'function') throw new Error('docx 库加载异常');
+                container.innerHTML = '';
+                await renderAsync(buffer, container, null, { inWrapper: true, ignoreHeight: false });
+            } else if (ext === 'xlsx') {
+                const mod = await import(OFFICE_LIBS.xlsx);
+                const XLSX = mod.default || mod;
+                const wb = XLSX.read(buffer, { type: 'array' });
+                container.innerHTML = '';
+                wb.SheetNames.forEach(name => {
+                    const label = document.createElement('div');
+                    label.className = 'office-sheet-name';
+                    label.textContent = name;
+                    container.appendChild(label);
+                    const holder = document.createElement('div');
+                    holder.className = 'office-table';
+                    holder.innerHTML = XLSX.utils.sheet_to_html(wb.Sheets[name]);
+                    container.appendChild(holder);
+                });
+            } else if (ext === 'pptx') {
+                const mod = await import(OFFICE_LIBS.pptx);
+                const init = mod.init || (mod.default && mod.default.init);
+                if (typeof init !== 'function') throw new Error('pptx 库加载异常');
+                container.innerHTML = '';
+                const wrapper = document.createElement('div');
+                wrapper.style.minHeight = '480px';
+                container.appendChild(wrapper);
+                const width = Math.min(window.innerWidth - 140, 960);
+                const previewer = init(wrapper, { width: width, height: Math.round(width * 0.5625) });
+                await previewer.preview(buffer);
+            }
+        } catch (err) {
+            container.innerHTML = `<p style="color:#dc2626">${ext.toUpperCase()} 预览失败（渲染库需联网加载，或该文件过于复杂暂不支持）。可关闭窗口后下载查看。</p>`;
+        }
+    }
+
+    function escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = value == null ? '' : String(value);
+        return div.innerHTML;
+    }
+
+    function resetPreview() {
+        state.previewItem = null;
+        resetPreviewZoom();
+        const video = document.getElementById('previewVideo');
+        const audio = document.getElementById('previewAudio');
+        const frame = document.getElementById('previewFrame');
+        const doc = document.getElementById('previewDoc');
+        video.pause();
+        audio.pause();
+        ['previewImg', 'previewVideo', 'previewAudio'].forEach(id => document.getElementById(id).hidden = true);
+        video.removeAttribute('src');
+        audio.removeAttribute('src');
+        document.getElementById('previewImg').removeAttribute('src');
+        frame.hidden = true;
+        frame.removeAttribute('src');
+        doc.hidden = true;
+        doc.innerHTML = '';
+    }
+
+    function closePreview(fromRoute) {
+        resetPreview();
+        document.getElementById('preview').classList.remove('open');
+        // 用户手势关闭时,把 #view 那条历史退掉;来自 popstate 的关闭则不能再 back
+        if (!fromRoute && location.hash === '#view') history.back();
+    }
+
+    // ---- 图片预览手势：双指缩放 + 单指平移（放大后）+ 双击在 1x/2.5x 间切换 ----
+    const ZOOM_MAX = 8, ZOOM_DOUBLE_TAP = 2.5, DOUBLE_TAP_MS = 300;
+    const zoomState = {
+        pointers: new Map(), scale: 1, tx: 0, ty: 0,
+        startDist: 0, startScale: 1, centerStart: null, panStart: null, lastTap: 0
+    };
+
+    function clampZoom(v) { return Math.min(ZOOM_MAX, Math.max(1, v)); }
+
+    function applyPreviewZoom() {
+        const img = document.getElementById('previewImg');
+        if (!img) return;
+        img.style.transform = `translate(${zoomState.tx}px, ${zoomState.ty}px) scale(${zoomState.scale})`;
+    }
+
+    function resetPreviewZoom() {
+        zoomState.scale = 1;
+        zoomState.tx = 0;
+        zoomState.ty = 0;
+        zoomState.panStart = null;
+        zoomState.centerStart = null;
+        applyPreviewZoom();
+    }
+
+    /** 缩放到 target 并让视口坐标 (cx,cy) 处的内容点保持在原位。 */
+    function zoomAt(target, cx, cy) {
+        target = clampZoom(target);
+        if (target === zoomState.scale) return;
+        const centerX = window.innerWidth / 2, centerY = window.innerHeight / 2;
+        // 内容点相对图片中心的无缩放偏移 = ((视口点-屏幕中心) - 当前平移) / 当前缩放
+        const px = ((cx - centerX) - zoomState.tx) / zoomState.scale;
+        const py = ((cy - centerY) - zoomState.ty) / zoomState.scale;
+        zoomState.tx = (cx - centerX) - target * px;
+        zoomState.ty = (cy - centerY) - target * py;
+        zoomState.scale = target;
+        if (zoomState.scale <= 1.01) {
+            zoomState.scale = 1; zoomState.tx = 0; zoomState.ty = 0;
+        }
+        applyPreviewZoom();
+    }
+
+    function bindPreviewZoom() {
+        const img = document.getElementById('previewImg');
+        if (!img) return;
+        img.addEventListener('pointerdown', e => {
+            img.setPointerCapture(e.pointerId);
+            zoomState.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (zoomState.pointers.size === 1) {
+                zoomState.panStart = { x: e.clientX, y: e.clientY, tx: zoomState.tx, ty: zoomState.ty };
+                const now = Date.now();
+                if (now - zoomState.lastTap < DOUBLE_TAP_MS) {
+                    // 双击：已放大则复位,否则放大到该点
+                    zoomAt(zoomState.scale > 1 ? 1 : ZOOM_DOUBLE_TAP, e.clientX, e.clientY);
+                    zoomState.lastTap = 0;
+                } else {
+                    zoomState.lastTap = now;
+                }
+            } else if (zoomState.pointers.size === 2) {
+                const pts = [...zoomState.pointers.values()];
+                zoomState.startDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+                zoomState.startScale = zoomState.scale;
+                zoomState.centerStart = {
+                    x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2,
+                    tx: zoomState.tx, ty: zoomState.ty
+                };
+                zoomState.panStart = null;
+            }
+            e.preventDefault();
+        });
+        img.addEventListener('pointermove', e => {
+            if (!zoomState.pointers.has(e.pointerId)) return;
+            zoomState.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (zoomState.pointers.size === 2 && zoomState.centerStart) {
+                const pts = [...zoomState.pointers.values()];
+                const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                zoomState.scale = clampZoom(zoomState.startScale * dist / zoomState.startDist);
+                // 双指中心移动同时平移
+                zoomState.tx = zoomState.centerStart.tx + (pts[0].x + pts[1].x) / 2 - zoomState.centerStart.x;
+                zoomState.ty = zoomState.centerStart.ty + (pts[0].y + pts[1].y) / 2 - zoomState.centerStart.y;
+                applyPreviewZoom();
+            } else if (zoomState.pointers.size === 1 && zoomState.panStart && zoomState.scale > 1) {
+                zoomState.tx = zoomState.panStart.tx + (e.clientX - zoomState.panStart.x);
+                zoomState.ty = zoomState.panStart.ty + (e.clientY - zoomState.panStart.y);
+                applyPreviewZoom();
+            }
+        });
+        const release = e => {
+            zoomState.pointers.delete(e.pointerId);
+            if (zoomState.pointers.size < 2) zoomState.centerStart = null;
+            if (zoomState.pointers.size === 0) zoomState.panStart = null;
+            // 缩放回到接近 1x 时归位,避免残留 1.02 倍的怪异状态
+            if (zoomState.pointers.size === 0 && zoomState.scale <= 1.01) resetPreviewZoom();
+        };
+        img.addEventListener('pointerup', release);
+        img.addEventListener('pointercancel', release);
+    }
+
+    // ---- 下载令牌：移动端 WebView 会把下载转交系统下载器，该请求不携带 Cookie，
+    // 后端虽支持 ?token= 认证，但令牌存于 HttpOnly Cookie 里页面读不到，
+    // 因此登录时另存一份到 localStorage，下载 URL 统一经 withToken 附加。 ----
+    const TOKEN_KEY = 'toolan_token';
+
+    function withToken(url) {
+        const token = localStorage.getItem(TOKEN_KEY);
+        if (!token) return url;
+        return url + (url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token);
+    }
+
+    // ---- 加密模式媒体访问：把 /static 直链换成加密下载端点，解密成 blob URL ----
+    // 明文模式全部原样返回，行为与旧版一致。
+    const blobUrlCache = new Map();
+
+    function cryptoActive() {
+        return !!(window.ToolanA1 && ToolanA1.isActive());
+    }
+
+    function encryptedMediaUrl(item) {
+        const m = (item.url || '').match(/^\/static\/(files|images)\/(.+)$/);
+        if (m) return ToolanA1.downloadUrl(m[1] === 'images' ? 'image' : 'file', m[2]);
+        return item.url; // zip 条目等已是 API 地址，按原样加密请求
+    }
+
+    function fetchMediaBlob(item) {
+        if (!cryptoActive()) return fetch(item.url).then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.blob();
+        });
+        return fetch(encryptedMediaUrl(item), { headers: { 'X-Toolan-Crypto': ToolanA1.VERSION } })
+            .then(res => {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return ToolanA1.decryptStream(res);
+            })
+            .then(r => {
+                const type = (r.meta && r.meta.mime) || '';
+                return type ? new Blob([r.blob], { type: type }) : r.blob;
+            });
+    }
+
+    /** 解析出可直接给 img/video/audio/iframe 用的地址；加密模式返回 blob URL（带缓存）。 */
+    function resolveMediaUrl(item) {
+        if (!cryptoActive()) return Promise.resolve(item.url);
+        const key = item.url;
+        if (blobUrlCache.has(key)) return Promise.resolve(blobUrlCache.get(key));
+        return fetchMediaBlob(item)
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                blobUrlCache.set(key, url);
+                return url;
+            })
+            .catch(err => {
+                console.warn('媒体解密失败，回退明文地址', err);
+                return item.url;
+            });
+    }
+
+    function revokeMediaUrls() {
+        for (const url of blobUrlCache.values()) URL.revokeObjectURL(url);
+        blobUrlCache.clear();
+    }
+
+    // localStorage 里没有令牌（登录发生在旧版本上）则向服务端要一份：Cookie 仍有效即可无感补齐。
+    let tokenPromise = null;
+    function ensureToken() {
+        if (localStorage.getItem(TOKEN_KEY)) return Promise.resolve();
+        if (!tokenPromise) {
+            tokenPromise = fetch('/api/auth/token')
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    if (data && data.token) localStorage.setItem(TOKEN_KEY, data.token);
+                })
+                .catch(() => {}) // 拉取失败退回纯 Cookie 下载（桌面浏览器仍可用）
+                .finally(() => { tokenPromise = null; });
+        }
+        return tokenPromise;
+    }
+
+    async function downloadOne(item) {
+        await ensureToken();
+        // 加密模式：优先原生桥下载（App 内解密落盘），否则 fetch + A1L 解密 + blob 保存
+        if (cryptoActive()) {
+            try {
+                await ToolanA1.downloadEncrypted(withToken(encryptedMediaUrl(item)), item.name);
+                return;
+            } catch (err) {
+                toast('下载', '加密下载失败：' + err.message);
+                return;
+            }
+        }
+        const a = document.createElement('a');
+        a.href = withToken(item.url);
+        a.download = item.name;
+        a.click();
+    }
+
+    // 分享仓库文件到微信/QQ 等其它应用（App 内经 ToolanShare 原生桥执行，
+    // 下载地址构造与加密下载同路：加密走 /api/download 流，明文走 /static 直链）
+    async function shareFile(item) {
+        if (!window.ToolanShare) {
+            toast('分享', '分享仅在手机 App 内可用');
+            return;
+        }
+        await ensureToken();
+        const url = cryptoActive() ? withToken(encryptedMediaUrl(item)) : withToken(item.url);
+        window.ToolanShare.shareFile(url, item.name);
+    }
+
+    // ---- 压缩包内容预览：后端把 zip 内条目解压后按 inline 流式返回，前端复用现有预览弹窗 ----
+    const IMG_EXT = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif'];
+    const VID_EXT = ['mp4', 'webm', 'ogv', 'mov', 'm4v', 'mkv'];
+    const AUD_EXT = ['mp3', 'wav', 'flac', 'aac', 'm4a', 'ogg', 'oga', 'opus', 'weba', 'aiff', 'aif', 'alac'];
+
+    function extToMediaType(ext) {
+        if (IMG_EXT.includes(ext)) return 'image';
+        if (VID_EXT.includes(ext)) return 'video';
+        if (AUD_EXT.includes(ext)) return 'audio';
+        return 'file';
+    }
+
+    function entryPreviewable(ext) {
+        return extToMediaType(ext) !== 'file' || INLINE_DOCS.includes(ext) || OFFICE_DOCS.includes(ext);
+    }
+
+    function iconForEntry(ext) {
+        if (ext === 'docx') return '📃';
+        if (ext === 'xlsx') return '📊';
+        if (ext === 'pptx') return '📽️';
+        const t = extToMediaType(ext);
+        if (t === 'image') return '🖼️';
+        if (t === 'video') return '🎬';
+        if (t === 'audio') return '🎵';
+        if (INLINE_DOCS.includes(ext)) return '📄';
+        return '📦';
+    }
+
+    function zipEntryURL(item, entryName) {
+        return '/api/zip/file?' + new URLSearchParams({ type: state.tab, path: item.path, entry: entryName }).toString();
+    }
+
+    function downloadZipEntry(item, entryName, name) {
+        ensureToken().then(() => {
+            if (cryptoActive()) {
+                ToolanA1.downloadEncrypted(withToken(zipEntryURL(item, entryName)), name)
+                    .catch(err => toast('下载', '加密下载失败：' + err.message));
+                return;
+            }
+            const a = document.createElement('a');
+            a.href = withToken(zipEntryURL(item, entryName));
+            a.download = name;
+            a.click();
+        });
+    }
+
+    // 激活压缩包内某个条目：可预览则复用现有预览弹窗，否则直接下载；嵌套 zip 仅支持下载。
+    function activateZipEntry(item, entryName) {
+        const name = entryName.split('/').pop() || entryName;
+        const ext = (name.split('.').pop() || '').toLowerCase();
+        if (ext === 'zip' || !entryPreviewable(ext)) return downloadZipEntry(item, entryName, name);
+        openFile({ name: name, ext: ext, url: zipEntryURL(item, entryName), mediaType: extToMediaType(ext) });
+    }
+
+    async function openZipBrowser(item) {
+        const wrap = document.createElement('div');
+        wrap.className = 'zip-browser';
+        const tip = document.createElement('div');
+        tip.className = 'zip-tip';
+        tip.textContent = '正在读取压缩包…';
+        const list = document.createElement('div');
+        list.className = 'zip-list';
+        wrap.append(tip, list);
+
+        let layer;
+        const footer = makeModalActions([{ label: '关闭', onClick: () => layer.finish(false) }]);
+        layer = openModalLayer({ title: '压缩包：' + item.name, body: wrap, footer });
+
+        let entries = [];
+        try {
+            const res = await fetch('/api/zip/entries?' + new URLSearchParams({ type: state.tab, path: item.path }).toString());
+            const data = await res.json();
+            if (!res.ok) { tip.textContent = data.error || '读取压缩包失败'; return; }
+            entries = data.entries || [];
+        } catch (err) {
+            tip.textContent = '读取压缩包失败';
+            return;
+        }
+
+        if (!entries.length) { tip.textContent = '压缩包为空，或不含可显示的文件'; return; }
+        tip.textContent = `共 ${entries.length} 个文件 · 点击一行预览，不支持的类型将直接下载`;
+
+        entries.forEach(entry => {
+            const name = entry.name.split('/').pop() || entry.name;
+            const ext = (name.split('.').pop() || '').toLowerCase();
+            const row = document.createElement('div');
+            row.className = 'zip-row';
+            const icon = document.createElement('span'); icon.className = 'zip-icon'; icon.textContent = iconForEntry(ext);
+            const label = document.createElement('span'); label.className = 'zip-name'; label.textContent = entry.name; label.title = entry.name;
+            const size = document.createElement('span'); size.className = 'zip-size'; size.textContent = humanSize(entry.size);
+            const act = document.createElement('button'); act.type = 'button'; act.className = 'zip-open';
+            act.textContent = (ext !== 'zip' && entryPreviewable(ext)) ? '预览' : '下载';
+            act.addEventListener('click', ev => { ev.stopPropagation(); activateZipEntry(item, entry.name); });
+            row.append(icon, label, size, act);
+            row.addEventListener('click', () => activateZipEntry(item, entry.name));
+            list.appendChild(row);
+        });
+    }
+
+    let remindersReqSeq = 0;
+    async function loadReminders() {
+        // 序号防乱序:路由恢复可能连续触发两次,只让最后一次请求的结果生效
+        const seq = ++remindersReqSeq;
+        const res = await fetch('/api/reminders?includeDone=' + state.includeDone);
+        if (seq !== remindersReqSeq) return;
+        const data = await res.json();
+        state.reminders = data.list || [];
+        renderCalendar();
+        renderSelectedDateReminders();
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+        document.getElementById('calendarTitle').textContent =
+            `${state.calendarMonth.getFullYear()}年 ${state.calendarMonth.getMonth() + 1}月`;
+
+        const eventDates = new Set(state.reminders.map(item => dateKey(new Date(item.remindAt))));
+        const todayKey = dateKey(new Date());
+        const year = state.calendarMonth.getFullYear();
+        const month = state.calendarMonth.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const startOffset = (firstDay.getDay() + 6) % 7;
+        const start = new Date(year, month, 1 - startOffset);
+
+        for (let i = 0; i < 42; i++) {
+            const day = new Date(start);
+            day.setDate(start.getDate() + i);
+            const key = dateKey(day);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'calendar-day';
+            if (day.getMonth() !== month) btn.classList.add('is-muted');
+            if (eventDates.has(key)) btn.classList.add('has-events');
+            if (key === todayKey) btn.classList.add('is-today');
+            if (key === dateKey(state.selectedDate)) btn.classList.add('is-selected');
+            btn.textContent = String(day.getDate());
+            btn.addEventListener('click', () => selectCalendarDate(day));
+            grid.appendChild(btn);
+        }
+    }
+
+    function renderSelectedDateReminders() {
+        const list = document.getElementById('reminderList');
+        list.innerHTML = '';
+        const selectedKey = dateKey(state.selectedDate);
+        document.getElementById('selectedDateLabel').textContent = formatDateLabel(state.selectedDate);
+
+        const reminders = state.reminders
+            .filter(item => dateKey(new Date(item.remindAt)) === selectedKey)
+            .sort((a, b) => new Date(a.remindAt) - new Date(b.remindAt));
+
+        if (reminders.length === 0) {
+            list.appendChild(emptyNode());
+            return;
+        }
+
+        reminders.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'row-card' + (item.done ? ' done' : '');
+            const top = document.createElement('div');
+            top.className = 'row-top';
+            const title = document.createElement('div');
+            title.className = 'row-title';
+            title.textContent = item.title || '提醒';
+            const ops = document.createElement('div');
+            const done = document.createElement('button');
+            done.textContent = item.done ? '恢复' : '完成';
+            done.addEventListener('click', () => setReminderDone(item.id, !item.done));
+            const del = document.createElement('button');
+            del.className = 'danger';
+            del.textContent = '删除';
+            del.addEventListener('click', () => deleteReminder(item.id));
+            ops.append(done, del);
+            top.append(title, ops);
+            card.appendChild(top);
+            appendText(card, 'meta', formatTime(item.remindAt));
+            appendText(card, 'row-content', item.content || '');
+            list.appendChild(card);
+        });
+    }
+
+    function selectCalendarDate(date, fromRoute) {
+        state.selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        state.calendarMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        renderCalendar();
+        renderSelectedDateReminders();
+        if (!fromRoute) pushRoute();
+    }
+
+    function changeCalendarMonth(offset, fromRoute) {
+        state.calendarMonth = new Date(
+            state.calendarMonth.getFullYear(),
+            state.calendarMonth.getMonth() + offset,
+            1
+        );
+        renderCalendar();
+        if (!fromRoute) pushRoute();
+    }
+
+    function selectToday() {
+        selectCalendarDate(new Date());
+    }
+
+    async function addReminder() {
+        const title = document.getElementById('reminderTitle').value.trim();
+        const content = document.getElementById('reminderContent').value.trim();
+        const time = document.getElementById('reminderTime').value || '09:00';
+        const remindAt = `${dateKey(state.selectedDate)}T${time}`;
+        if (!title && !content) return toast('日期提醒', '标题或内容不能为空');
+        const res = await fetch('/api/reminders', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title, content, remindAt})
+        });
+        if (res.ok) {
+            document.getElementById('reminderTitle').value = '';
+            document.getElementById('reminderContent').value = '';
+            loadReminders();
+        }
+    }
+
+    async function setReminderDone(id, done) {
+        await fetch('/api/reminders/' + id, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({done})
+        });
+        loadReminders();
+    }
+
+    async function deleteReminder(id) {
+        if (!(await confirmDialog('删除这条提醒？此操作不可恢复。', { title: '删除提醒', danger: true, okText: '删除' }))) return;
+        await fetch('/api/reminders/' + id, {method: 'DELETE'});
+        loadReminders();
+    }
+
+    function toggleDone(fromRoute) {
+        state.includeDone = !state.includeDone;
+        document.getElementById('toggleDoneBtn').textContent = state.includeDone ? '隐藏已完成' : '显示已完成';
+        loadReminders();
+        if (!fromRoute) pushRoute();
+    }
+
     async function loadMessages() {
-        const list = document.getElementById('messageList');
-        list.innerHTML = '<li>加载中...</li>';
         const res = await fetch('/messages');
         const data = await res.json();
+        const list = document.getElementById('messageList');
         list.innerHTML = '';
-        (data.messages || []).reverse().forEach((msg, idx) => {
-            const li = document.createElement('li');
-            li.className = 'message-item';
-            li.innerHTML = `
-                <div class="message-meta">
-                    <div>${new Date(msg.time).toLocaleString()}</div>
-                    <button class="msg-delete" onclick="deleteMessage(${data.messages.length - 1 - idx})">删除</button>
-                </div>
-                <div class="message-body">
-                    <div class="message-title">${msg.title || '匿名'}</div>
-                    <div class="message-content">${msg.content}</div>
-                </div>
-            `;
-            list.appendChild(li);
+        const messages = data.messages || [];
+        if (messages.length === 0) {
+            list.appendChild(emptyNode());
+            return;
+        }
+        messages.slice().reverse().forEach((msg, idx) => {
+            const originalIndex = messages.length - 1 - idx;
+            const item = document.createElement('div');
+            item.className = 'message-item';
+            appendText(item, 'message-time', formatTime(msg.time));
+            const card = document.createElement('div');
+            card.className = 'row-card message-card';
+            const top = document.createElement('div');
+            top.className = 'row-top';
+            appendText(top, 'row-title', msg.title || '消息');
+            const del = document.createElement('button');
+            del.className = 'message-close';
+            del.type = 'button';
+            del.textContent = '×';
+            del.setAttribute('aria-label', '删除消息');
+            del.title = '删除';
+            del.addEventListener('click', () => deleteMessage(originalIndex));
+            top.appendChild(del);
+            card.appendChild(top);
+            appendText(card, 'row-content', msg.content || '');
+            item.appendChild(card);
+            list.appendChild(item);
         });
     }
 
     async function sendMessage() {
-        const title = document.getElementById('msgTitle').value;
-        const content = document.getElementById('msgContent').value;
-        if (!content) return alert('内容不能为空');
+        const title = document.getElementById('msgTitle').value.trim();
+        const content = document.getElementById('msgContent').value.trim();
+        if (!content) return toast('消息', '内容不能为空');
         const res = await fetch('/message', {
             method: 'POST',
-            body: JSON.stringify({ title, content })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title, content})
         });
         if (res.ok) {
+            document.getElementById('msgTitle').value = '';
             document.getElementById('msgContent').value = '';
             loadMessages();
         }
     }
 
     async function deleteMessage(index) {
-        if (!confirm('删除这条留言？')) return;
-        await fetch(`/message/${index}`, { method: 'DELETE' });
+        if (!(await confirmDialog('删除这条消息？', { title: '删除消息', danger: true, okText: '删除' }))) return;
+        await fetch('/message/' + index, {method: 'DELETE'});
         loadMessages();
     }
 
-    // 初始化加载
-    loadData();
+    async function loadClips() {
+        const res = await fetch('/api/clipboard');
+        const data = await res.json();
+        renderClips(data.clips || []);
+    }
+
+    function renderClips(clips) {
+        const list = document.getElementById('clipList');
+        list.innerHTML = '';
+        if (clips.length === 0) {
+            list.appendChild(emptyNode());
+            return;
+        }
+        clips.slice().reverse().forEach(clip => {
+            const card = document.createElement('div');
+            card.className = 'row-card';
+            const top = document.createElement('div');
+            top.className = 'row-top';
+            appendText(top, 'meta', formatTime(clip.time));
+            const ops = document.createElement('div');
+            ops.style.display = 'flex';
+            ops.style.gap = '8px';
+            const copy = document.createElement('button');
+            copy.textContent = '复制';
+            copy.addEventListener('click', () => copyClip(clip.content));
+            const del = document.createElement('button');
+            del.className = 'danger';
+            del.textContent = '删除';
+            del.addEventListener('click', () => deleteClip(clip.id));
+            ops.append(copy, del);
+            top.append(ops);
+            card.appendChild(top);
+            const body = document.createElement('div');
+            body.className = 'clip-content';
+            body.textContent = clip.content;
+            card.appendChild(body);
+            list.appendChild(card);
+        });
+    }
+
+    async function addClip() {
+        const input = document.getElementById('clipInput');
+        const content = input.value;
+        if (!content.trim()) return toast('剪贴板', '内容不能为空');
+        const res = await fetch('/api/clipboard', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({content})
+        });
+        if (res.ok) {
+            input.value = '';
+            loadClips();
+        }
+    }
+
+    // readClipboardIntoInput uses the async Clipboard API when available (secure context)
+    // and otherwise hints the user to paste manually, since http://LAN blocks readText().
+    async function readClipboardIntoInput() {
+        const input = document.getElementById('clipInput');
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            try {
+                input.value = await navigator.clipboard.readText();
+                input.focus();
+                return;
+            } catch (err) {
+                toast('剪贴板', '浏览器未授权自动读取，请手动粘贴 (Ctrl/长按 V)');
+            }
+        } else {
+            toast('剪贴板', '当前环境不支持自动读取，请手动粘贴 (Ctrl/长按 V)');
+        }
+        input.focus();
+    }
+
+    async function copyClip(content) {
+        if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(content);
+                toast('剪贴板', '已复制');
+                return;
+            } catch (err) {}
+        }
+        // Fallback for insecure http context: select-and-copy via a hidden textarea.
+        const ta = document.createElement('textarea');
+        ta.value = content;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch (err) {}
+        document.body.removeChild(ta);
+        toast('剪贴板', ok ? '已复制' : '请长按/右键手动复制');
+    }
+
+    async function deleteClip(id) {
+        if (!(await confirmDialog('删除这条剪贴板记录？', { title: '删除记录', danger: true, okText: '删除' }))) return;
+        await fetch('/api/clipboard/' + id, {method: 'DELETE'});
+        loadClips();
+    }
+
+    async function clearClips() {
+        if (!(await confirmDialog('清空所有共享剪贴板记录？所有设备将不再看到历史。', { title: '清空剪贴板', danger: true, okText: '清空' }))) return;
+        await fetch('/api/clipboard', {method: 'DELETE'});
+        loadClips();
+    }
+
+    // WS 事件分发：数据可能是明文 JSON 或（加密通道下）解密后的明文
+    function handleWsEvent(text) {
+        try {
+            const data = JSON.parse(text);
+            const payload = data.payload || {};
+            if (data.type === 'message' || data.type === 'notification') {
+                toast(payload.title || '消息', payload.content || '');
+                if (state.tab === 'message') loadMessages();
+            }
+            if (data.type && data.type.startsWith('reminder.')) {
+                toast(payload.title || '日期提醒', payload.content || formatTime(payload.remindAt));
+                if (state.tab === 'reminder') loadReminders();
+            }
+            if (data.type === 'clipboard') {
+                toast('剪贴板', '收到新的共享内容');
+                if (state.tab === 'clipboard') loadClips();
+            }
+            if (data.type === 'clipboard.deleted' || data.type === 'clipboard.cleared') {
+                if (state.tab === 'clipboard') loadClips();
+            }
+        } catch (err) {}
+    }
+
+    function connectWebSocket() {
+        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsHref = window.ToolanA1
+            ? ToolanA1.wsUrl(protocol + '//' + location.host + '/ws')
+            : protocol + '//' + location.host + '/ws';
+        const socket = new WebSocket(wsHref);
+        socket.onmessage = event => {
+            // 加密通道：先解信封再解析；解密失败静默丢弃本条
+            const deliver = window.ToolanA1
+                ? ToolanA1.decryptMessage(event.data)
+                : Promise.resolve(event.data);
+            deliver.then(data => {
+                handleWsEvent(data);
+            }).catch(() => {});
+        };
+        // 会话失效（如服务端更换会话密钥后令牌全部作废）时服务端对 /ws 返回 401，
+        // 盲目重连只会每 3 秒刷一条 401：先探测会话，未登录则跳登录页，可达则照常重连。
+        socket.onclose = () => setTimeout(async () => {
+            try {
+                const res = await fetch('/api/auth/status');
+                const s = await res.json();
+                if (!s || !s.authenticated) {
+                    location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search);
+                    return;
+                }
+            } catch (err) { /* 探测失败（服务暂不可达）照常重连 */ }
+            connectWebSocket();
+        }, 3000);
+    }
+
+    function infoNode(item) {
+        const box = document.createElement('div');
+        box.className = 'item-info';
+        appendText(box, 'name', item.name);
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        appendText(meta, '', humanSize(item.size));
+        appendText(meta, '', labelForCategory(item.category));
+        box.appendChild(meta);
+        appendText(box, 'meta', formatTime(item.createdAt));
+        const ren = document.createElement('button');
+        ren.type = 'button';
+        ren.className = 'inline-rename';
+        ren.textContent = '✎ 重命名';
+        ren.addEventListener('click', ev => { ev.stopPropagation(); renameFile(item); });
+        box.appendChild(ren);
+        return box;
+    }
+
+    function appendCell(row, text) {
+        const td = document.createElement('td');
+        td.textContent = text;
+        row.appendChild(td);
+    }
+
+    function appendText(parent, className, text) {
+        const node = document.createElement('div');
+        if (className) node.className = className;
+        node.textContent = text;
+        parent.appendChild(node);
+        return node;
+    }
+
+    function emptyNode() {
+        const div = document.createElement('div');
+        div.className = 'empty';
+        div.textContent = '暂无数据';
+        return div;
+    }
+
+    function toast(title, content) {
+        const wrap = document.getElementById('toast');
+        const node = document.createElement('div');
+        node.className = 'toast-item';
+        appendText(node, 'toast-title', title);
+        appendText(node, '', content);
+        wrap.appendChild(node);
+        setTimeout(() => node.remove(), 4200);
+    }
+
+    // ---- 通用弹窗内核（替代 alert / confirm / prompt）----
+    // 每次打开都会新建一个覆盖层，支持叠加（如文件夹选择器里再弹「新建文件夹」）。
+    const modalStack = [];
+
+    function openModalLayer({ title = '', body = '', footer = null, onClose }) {
+        const root = document.createElement('div');
+        root.className = 'modal';
+
+        const mask = document.createElement('div');
+        mask.className = 'modal-mask';
+
+        const box = document.createElement('div');
+        box.className = 'modal-box';
+
+        const head = document.createElement('div');
+        head.className = 'modal-head';
+        const titleEl = document.createElement('span');
+        titleEl.textContent = title;
+        const closeX = document.createElement('button');
+        closeX.type = 'button';
+        closeX.className = 'modal-x';
+        closeX.setAttribute('aria-label', '关闭');
+        closeX.textContent = '×';
+        head.append(titleEl, closeX);
+
+        const bodyEl = document.createElement('div');
+        bodyEl.className = 'modal-body';
+        if (typeof body === 'string') bodyEl.textContent = body;
+        else if (body) bodyEl.appendChild(body);
+
+        const footEl = document.createElement('div');
+        footEl.className = 'modal-foot';
+        if (footer) footEl.appendChild(footer);
+
+        box.append(head, bodyEl, footEl);
+        root.append(mask, box);
+        document.body.appendChild(root);
+        requestAnimationFrame(() => root.classList.add('open'));
+        // 模态记入历史:后退一次关闭一层
+        history.pushState(null, '', '#modal');
+
+        const ctx = {};
+        let closed = false;
+        function finish(result, fromRoute) {
+            if (closed) return;
+            closed = true;
+            const idx = modalStack.indexOf(ctx);
+            if (idx >= 0) modalStack.splice(idx, 1);
+            root.classList.remove('open');
+            document.removeEventListener('keydown', onKey, true);
+            setTimeout(() => root.remove(), 180);
+            // 用户手势关闭时把 #modal 那条历史退掉;popstate 触发的关闭不能再 back
+            if (!fromRoute && location.hash === '#modal') history.back();
+            if (onClose) onClose(result);
+        }
+        function onKey(e) {
+            if (e.key !== 'Escape') return;
+            if (previewOpen()) return; // 预览层叠在模态之上时,Esc 先交给预览层
+            if (modalStack[modalStack.length - 1] !== ctx) return; // 只响应最上层弹窗
+            e.preventDefault();
+            finish(false);
+        }
+        document.addEventListener('keydown', onKey, true);
+        closeX.addEventListener('click', () => finish(false));
+        mask.addEventListener('click', () => finish(false));
+        modalStack.push(ctx);
+
+        return { finish };
+    }
+
+    function makeModalActions(buttons) {
+        const row = document.createElement('div');
+        row.className = 'modal-actions';
+        buttons.forEach(cfg => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            if (cfg.cls) btn.className = cfg.cls;
+            btn.textContent = cfg.label;
+            btn.addEventListener('click', cfg.onClick);
+            row.appendChild(btn);
+        });
+        return row;
+    }
+
+    function alertDialog(message, opts = {}) {
+        const { title = '提示', okText = '知道了' } = opts;
+        return new Promise(resolve => {
+            const footer = makeModalActions([{ label: okText, cls: 'primary', onClick: () => layer.finish(true) }]);
+            const layer = openModalLayer({ title, body: message, footer, onClose: () => resolve() });
+        });
+    }
+
+    function confirmDialog(message, opts = {}) {
+        const { title = '确认', okText = '确定', cancelText = '取消', danger = false } = opts;
+        return new Promise(resolve => {
+            const footer = makeModalActions([
+                { label: cancelText, onClick: () => layer.finish(false) },
+                { label: okText, cls: danger ? 'danger' : 'primary', onClick: () => layer.finish(true) }
+            ]);
+            const layer = openModalLayer({ title, body: message, footer, onClose: (r) => resolve(r === true) });
+        });
+    }
+
+    function promptDialog(opts = {}) {
+        const { title = '请输入', label = '', value = '', placeholder = '', okText = '确定', cancelText = '取消', validate } = opts;
+        return new Promise(resolve => {
+            const wrap = document.createElement('div');
+            if (label) {
+                const lab = document.createElement('div');
+                lab.className = 'field-label';
+                lab.textContent = label;
+                wrap.appendChild(lab);
+            }
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'prompt-input';
+            input.value = value;
+            input.placeholder = placeholder;
+            wrap.appendChild(input);
+
+            let layer;
+            const submit = () => {
+                const v = input.value.trim();
+                input.classList.remove('invalid');
+                if (validate) {
+                    const err = validate(v);
+                    if (err) { input.classList.add('invalid'); toast('提示', err); input.focus(); return; }
+                }
+                layer.finish(v); // 通过 onClose 回传字符串结果
+            };
+            input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+
+            const footer = makeModalActions([
+                { label: cancelText, onClick: () => layer.finish(false) },
+                { label: okText, cls: 'primary', onClick: submit }
+            ]);
+            // 成功回传字符串，取消（含 Esc / 遮罩 / ×）回传 false → null。
+            layer = openModalLayer({ title, body: wrap, footer, onClose: (r) => resolve(typeof r === 'string' ? r : null) });
+            setTimeout(() => { input.focus(); input.select(); }, 60);
+        });
+    }
+
+    // 文件夹选择器：自带层级浏览 + 就地新建。
+    // 返回选中的目标路径（'' 表示根/未分类），取消返回 null。
+    function folderPicker(opts = {}) {
+        const { title = '移动到' } = opts;
+        return new Promise(resolve => {
+            let path = state.currentFolder || '';
+
+            const wrap = document.createElement('div');
+            wrap.className = 'folder-picker';
+            const crumb = document.createElement('div');
+            crumb.className = 'picker-crumb';
+            const target = document.createElement('div');
+            target.className = 'picker-target';
+            const list = document.createElement('div');
+            list.className = 'picker-list';
+            const newBtn = document.createElement('button');
+            newBtn.type = 'button';
+            newBtn.className = 'picker-new';
+            newBtn.textContent = '➕ 在此新建文件夹';
+            wrap.append(crumb, target, list, newBtn);
+
+            function renderCrumb() {
+                crumb.innerHTML = '';
+                const add = (label, to, cur) => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'crumb' + (cur ? ' current' : '');
+                    b.textContent = label;
+                    b.addEventListener('click', () => { path = to; refresh(); });
+                    crumb.appendChild(b);
+                };
+                add('全部', '', path === '');
+                const segs = path ? path.split('/') : [];
+                segs.forEach((s, i) => {
+                    const sep = document.createElement('span');
+                    sep.className = 'sep';
+                    sep.textContent = '/';
+                    crumb.appendChild(sep);
+                    add(s, segs.slice(0, i + 1).join('/'), i === segs.length - 1);
+                });
+            }
+
+            function renderList(folders) {
+                target.innerHTML = '';
+                const strong = document.createElement('b');
+                strong.textContent = path || '根目录 / 未分类';
+                target.append('移动到：', strong);
+
+                list.innerHTML = '';
+                if (!folders.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'picker-empty';
+                    empty.textContent = '此目录下暂无子文件夹，可直接移动到此处';
+                    list.appendChild(empty);
+                    return;
+                }
+                folders.forEach(f => {
+                    const row = document.createElement('button');
+                    row.type = 'button';
+                    row.className = 'picker-item';
+                    const icon = document.createElement('span'); icon.className = 'picker-icon'; icon.textContent = '📁';
+                    const name = document.createElement('span'); name.className = 'picker-name'; name.textContent = f.name;
+                    const count = document.createElement('span'); count.className = 'picker-count'; count.textContent = f.count + ' 项';
+                    const go = document.createElement('span'); go.className = 'picker-go'; go.textContent = '进入 ›';
+                    row.append(icon, name, count, go);
+                    row.addEventListener('click', () => { path = f.path; refresh(); });
+                    list.appendChild(row);
+                });
+            }
+
+            async function refresh() {
+                renderCrumb();
+                const params = new URLSearchParams({ type: state.tab, folder: path, sort: 'name', order: 'asc', category: 'all' });
+                try {
+                    const res = await fetch('/api/list?' + params.toString());
+                    const data = await res.json();
+                    renderList(data.folders || []);
+                } catch (err) {
+                    renderList([]);
+                }
+            }
+
+            newBtn.addEventListener('click', async () => {
+                const name = await promptDialog({
+                    title: '新建文件夹',
+                    label: '将创建在：' + (path || '根目录 / 未分类'),
+                    placeholder: '文件夹名称',
+                    validate: v => v ? '' : '名称不能为空'
+                });
+                if (name === null) return;
+                const created = path ? path + '/' + name : name;
+                const res = await fetch('/api/folder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: state.tab, folder: created })
+                });
+                if (res.ok) await refresh();
+                else { const d = await res.json().catch(() => ({})); toast('文件夹', d.error || '创建失败'); }
+            });
+
+            let layer;
+            const footer = makeModalActions([
+                { label: '取消', onClick: () => layer.finish(false) },
+                { label: '移动到此处', cls: 'primary', onClick: () => layer.finish(path) }
+            ]);
+            // 成功回传选中的 path（可能是 '' 表示根），取消（含 Esc / 遮罩 / ×）回传 false → null。
+            layer = openModalLayer({ title, body: wrap, footer, onClose: (r) => resolve(r === false ? null : r) });
+            refresh();
+        });
+    }
+
+
+    function humanSize(size) {
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let value = Number(size) || 0;
+        let index = 0;
+        while (value >= 1024 && index < units.length - 1) {
+            value /= 1024;
+            index++;
+        }
+        return index === 0 ? `${value}${units[index]}` : `${value.toFixed(1)}${units[index]}`;
+    }
+
+    function dateKey(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function formatDateLabel(date) {
+        return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'
+        });
+    }
+
+    function formatTime(value) {
+        if (!value) return '';
+        return new Date(value).toLocaleString();
+    }
+
+    function labelForCategory(category) {
+        return {
+            image: '图片',
+            video: '视频',
+            audio: '音频',
+            document: '文档',
+            archive: '压缩包',
+            other: '其它'
+        }[category] || category || '其它';
+    }
+
+    // 初始进入时按 URL hash 恢复到对应标签页/文件夹(支持直接分享 #clipboard 之类地址)
+    applyRoute();
+    if (!location.hash) history.replaceState(null, '', currentHash());
+    bindPreviewZoom();
+    loadAssets();
+    connectWebSocket();
 </script>
 </body>
 </html>

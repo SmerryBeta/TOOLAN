@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - TOOLAN</title>
+    <meta name="referrer" content="no-referrer">
+    <style>
+        :root {
+            --night: #0B1322;
+            --night-deep: #060A13;
+            --gold: #0B83F1;
+            --gold-bright: #82BCFA;
+            --text: rgba(255,255,255,.92);
+            --text-2: rgba(255,255,255,.62);
+            --text-3: rgba(255,255,255,.42);
+            --line: rgba(255,255,255,.15);
+            --line-strong: rgba(255,255,255,.30);
+            --glass: rgba(255,255,255,.06);
+            --glass-strong: rgba(255,255,255,.10);
+            --glass-hover: rgba(255,255,255,.14);
+            --blur: 40px;
+            --blur-lg: 60px;
+            --spring: cubic-bezier(0.16,1,0.3,1);
+            --dur: 500ms;
+            --radius: 16px;
+            --radius-lg: 24px;
+            --shadow-glass: 0 16px 40px rgba(3,7,18,.5), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(2,6,16,.35);
+            --shadow-glass-sm: 0 8px 24px rgba(3,7,18,.45), inset 0 1px 0 rgba(255,255,255,.18);
+            --danger: #F87171;
+        }
+        * { box-sizing: border-box; }
+        html { color-scheme: dark; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background-color: var(--night);
+            background-image:
+                radial-gradient(560px circle at 82% 12%, rgba(124,156,196,.25), transparent 60%),
+                radial-gradient(480px circle at 12% 88%, rgba(51,81,122,.34), transparent 62%),
+                radial-gradient(360px circle at 55% 55%, rgba(11,131,241,.10), transparent 58%);
+            background-attachment: fixed;
+        }
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            pointer-events: none;
+            opacity: .025;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+        .card {
+            position: relative;
+            width: 360px;
+            padding: 34px 30px;
+            background: rgba(255,255,255,.08);
+            -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            backdrop-filter: blur(var(--blur-lg)) saturate(180%);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-glass);
+            overflow: hidden;
+        }
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 140px;
+            background: linear-gradient(to bottom, rgba(255,255,255,.12), transparent);
+            pointer-events: none;
+        }
+        .card > * { position: relative; }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .brand img { width: 32px; height: 32px; }
+        .brand h1 { font-size: 20px; margin: 0; color: var(--gold-bright); letter-spacing: .04em; }
+        .tip { color: var(--text-2); font-size: 13px; margin: 0 0 22px; line-height: 1.6; }
+        label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 6px; }
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 15px;
+            color: var(--text);
+            background: rgba(255,255,255,.07);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10), inset 0 -1px 0 rgba(2,6,16,.3);
+            outline: none;
+            transition: all var(--dur) var(--spring);
+        }
+        input[type="password"]::placeholder { color: var(--text-3); }
+        input[type="password"]:focus {
+            border-color: rgba(11,131,241,.45);
+            background: rgba(255,255,255,.10);
+            box-shadow: 0 0 0 3px rgba(11,131,241,.18), inset 0 1px 0 rgba(255,255,255,.12);
+        }
+        button {
+            width: 100%;
+            margin-top: 18px;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            color: var(--gold-bright);
+            background: rgba(11,131,241,.15);
+            border: 1px solid rgba(11,131,241,.4);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 20px rgba(11,131,241,.15), inset 0 1px 0 rgba(130,188,250,.35);
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            backdrop-filter: blur(30px) saturate(160%);
+            transition: all var(--dur) var(--spring);
+        }
+        button:hover:not(:disabled) {
+            background: rgba(11,131,241,.22);
+            border-color: rgba(11,131,241,.55);
+            transform: translateY(-1px);
+        }
+        button:active:not(:disabled) { transform: scale(.97); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .error {
+            display: none;
+            margin-top: 12px;
+            color: var(--danger);
+            font-size: 13px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="brand">
+            <img src="/static/favicon.ico" alt="" onerror="this.style.display='none'">
+            <h1>TOOLAN</h1>
+        </div>
+        <p class="tip">局域网访问需要输入访问密码（首次启动时生成，见服务端控制台或 config.yml）</p>
+        <form id="form" autocomplete="off">
+            <label for="password">访问密码</label>
+            <input id="password" type="password" autofocus required placeholder="请输入访问密码">
+            <div id="cryptoBox" style="display:none; margin-top:14px;">
+                <label for="cryptoKey">加密密钥（与服务端一致则加密传输）</label>
+                <input id="cryptoKey" type="password" placeholder="十进制或 0x 十六进制数字，留空不加密">
+            </div>
+            <div id="cryptoNote" style="display:none; margin-top:14px; font-size:12px; color:var(--muted);">
+                ✔ 已由 App 提供加密密钥，本次登录及后续访问全部加密
+            </div>
+            <button id="btn" type="submit">登 录</button>
+            <div id="error" class="error"></div>
+        </form>
+    </div>
+    <script src="/toolan-crypto.js"></script>
+    <script>
+        (function () {
+            var next = '/';
+            try {
+                var params = new URLSearchParams(location.search);
+                var want = params.get('next') || '/';
+                // 只允许站内相对路径，防止开放重定向
+                if (want.charAt(0) === '/' && want.charAt(1) !== '/') next = want;
+            } catch (e) {}
+
+            // 加密能力展示：App 桥 → 提示已就绪；浏览器 https + 未配密钥 → 显示输入框
+            if (window.ToolanA1) {
+                if (ToolanA1.hasBridge()) {
+                    document.getElementById('cryptoNote').style.display = 'block';
+                } else if (ToolanA1.mode() !== 'webcrypto' && ToolanA1.getKey()) {
+                    document.getElementById('cryptoBox').style.display = 'block';
+                } else if (location.protocol === 'https:' && !ToolanA1.isActive()) {
+                    document.getElementById('cryptoBox').style.display = 'block';
+                } else if (ToolanA1.isActive()) {
+                    document.getElementById('cryptoNote').style.display = 'block';
+                    document.getElementById('cryptoNote').textContent = '✔ 已保存加密密钥，本次访问加密传输';
+                }
+            }
+
+            fetch('/api/auth/status').then(function (r) { return r.json(); }).then(function (s) {
+                if (s && s.authenticated) location.replace(next);
+            }).catch(function () {});
+
+            document.getElementById('form').addEventListener('submit', function (e) {
+                e.preventDefault();
+                var btn = document.getElementById('btn');
+                var errBox = document.getElementById('error');
+                var password = document.getElementById('password').value;
+                var keyInput = document.getElementById('cryptoKey');
+                // 登录前先把密钥写入 ToolanA1：fetch 封装会自动加密登录请求体
+                if (window.ToolanA1 && keyInput && keyInput.value.trim()) {
+                    ToolanA1.setKey(keyInput.value);
+                }
+                btn.disabled = true;
+                errBox.style.display = 'none';
+                fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ password: password })
+                }).then(function (r) {
+                    return r.json().then(function (data) { return { ok: r.ok, data: data }; });
+                }).then(function (res) {
+                    if (res.ok && res.data && res.data.success) {
+                        // 移动端 WebView 下载不携带 Cookie，页面需要令牌拼下载 URL（见 store.html withToken）
+                        try { localStorage.setItem('toolan_token', res.data.token || ''); } catch (e) {}
+                        location.replace(next);
+                        return;
+                    }
+                    errBox.textContent = (res.data && res.data.error) || '登录失败';
+                    errBox.style.display = 'block';
+                    btn.disabled = false;
+                }).catch(function () {
+                    errBox.textContent = '网络错误';
+                    errBox.style.display = 'block';
+                    btn.disabled = false;
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

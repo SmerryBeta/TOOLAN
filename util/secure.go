@@ -1,8 +1,8 @@
 package util
 
 import (
-	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 )
 
@@ -13,7 +13,7 @@ func GenerateSalt() string {
 }
 
 func EncryptPassword(password, salt string) string {
-	sum := md5.Sum([]byte(password + salt))
+	sum := sha256.Sum256([]byte(password + salt))
 	return hex.EncodeToString(sum[:])
 }
 
