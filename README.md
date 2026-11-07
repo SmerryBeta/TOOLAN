@@ -2,11 +2,11 @@
 
 这是一个 Go 语言后端项目。名称可以是 Tool & LAN 合并一下不就是 TOOLAN 了吗！
 
-<img width="600" alt="image" src="https://github.com/user-attachments/assets/dbf838b3-c222-430b-bc4c-a6f4b3249e65" />
+<img width="600" alt="image" src="https://github.com/user-attachments/assets/9b7bc6fd-31dd-44dc-8429-6a7b47d46428" />
 
 不过一般都是我一个人在用，据说QQ之类的国产软件都接入公安了，如果你传一些不雅的图或者极度隐私的图直接通过国内的社交工具传就不安全了。所以，在内网仓库藏、传一点18+之类的危险的图，敬茶蜀黍看不到 :P，管不到。管不到，根本管不到！而且内网用还不需要流量，传大文件舒服的很！
 
-<img width="1920" height="911" alt="image" src="https://github.com/user-attachments/assets/3e7e932e-4593-44f8-acbc-985a206fae9a" />
+<img width="600" alt="image" src="https://github.com/user-attachments/assets/3e7e932e-4593-44f8-acbc-985a206fae9a" />
 
 
 ## 项目结构
